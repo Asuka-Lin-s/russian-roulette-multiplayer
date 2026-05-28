@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>俄罗斯轮盘 - 多人联机版</title>
+    <title>俄罗斯轮盘 - 赌场版</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
             min-height: 100vh;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -18,597 +14,379 @@
             color: #fff;
             overflow-x: hidden;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+        
         h1 {
             text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-            letter-spacing: 3px;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            letter-spacing: 2px;
         }
-
+        
         .subtitle {
             text-align: center;
             color: #888;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
         }
-
+        
+        /* 顶部状态栏 */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .player-info .label { color: #888; font-size: 0.85rem; }
+        .player-info .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .player-info .value.debt { color: #ff6b6b; }
+        
+        .btn-small {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-wage {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            color: #000;
+            font-weight: bold;
+        }
+        .btn-wage:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-loan {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: white;
+        }
+        
+        .game-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
         /* 登录界面 */
         .login-screen {
             max-width: 400px;
-            margin: 50px auto;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
+            margin: 30px auto;
+            text-align: center;
         }
-
+        
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-
+        
         .input-group label {
             display: block;
             margin-bottom: 8px;
             color: #aaa;
             font-size: 0.9rem;
         }
-
+        
         .input-group input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 12px;
             border: 2px solid #444;
             border-radius: 8px;
             background: rgba(0, 0, 0, 0.3);
             color: #fff;
             font-size: 1rem;
-            transition: border-color 0.3s;
         }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
+        
         .btn {
-            width: 100%;
-            padding: 15px;
+            padding: 12px 30px;
             border: none;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            margin: 5px;
         }
-
+        
         .btn-primary {
             background: linear-gradient(145deg, #667eea, #764ba2);
             color: white;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(145deg, #f093fb, #f5576c);
+        
+        .btn-success {
+            background: linear-gradient(145deg, #28a745, #20c997);
             color: white;
         }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
-        }
-
+        
         .btn-danger {
             background: linear-gradient(145deg, #ff0000, #cc0000);
             color: white;
-            font-size: 1.2rem;
-            padding: 20px 40px;
         }
-
-        .btn-danger:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 5px 30px rgba(255, 0, 0, 0.5);
-        }
-
-        .btn-success {
-            background: linear-gradient(145deg, #4ecdc4, #44a08d);
-            color: white;
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 20px 0;
-            color: #666;
-            position: relative;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 40%;
-            height: 1px;
-            background: #444;
-        }
-
-        .divider::before { left: 0; }
-        .divider::after { right: 0; }
-
+        
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
         /* 游戏界面 */
-        .game-screen {
-            display: none;
-        }
-
-        .game-layout {
+        .game-screen { display: none; }
+        
+        .players-area {
             display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-        }
-
-        @media (max-width: 900px) {
-            .game-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* 主游戏区 */
-        .main-area {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 30px;
-        }
-
-        .room-info {
-            display: flex;
-            justify-content: space-between;
+            grid-template-columns: 1fr 200px 1fr;
+            gap: 15px;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .room-code {
+        
+        @media (max-width: 768px) {
+            .players-area { grid-template-columns: 1fr; }
+        }
+        
+        .player-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .player-card.active {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 30px rgba(78, 205, 196, 0.3);
+        }
+        
+        .player-card.dead {
+            border-color: #ff0000;
+            opacity: 0.6;
+        }
+        
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto 10px;
+        }
+        
+        .player-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
+        .player-coins { font-size: 0.9rem; color: #ffd700; }
+        .player-bet { font-size: 0.8rem; color: #ff6b6b; margin-top: 3px; }
+        
+        .vs-area {
+            text-align: center;
+        }
+        
+        .vs-badge {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #4ecdc4;
-            letter-spacing: 3px;
+            color: #ff0000;
         }
-
-        .room-code span {
+        
+        .pot-display {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        
+        /* 投注区 */
+        .betting-area {
+            text-align: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .betting-title {
             color: #888;
             font-size: 0.9rem;
-            margin-right: 10px;
+            margin-bottom: 10px;
         }
-
-        /* 转轮 */
-        .revolver-container {
+        
+        .bet-buttons {
             display: flex;
             justify-content: center;
-            margin: 30px 0;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
-
-        .revolver {
-            width: 200px;
-            height: 200px;
-            position: relative;
+        
+        .bet-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #444;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-
+        
+        .bet-btn:hover {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        .bet-info {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        
+        /* 转轮 */
+        .revolver-section {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .cylinder-container {
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 10px;
+        }
+        
         .cylinder {
-            width: 180px;
-            height: 180px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
             border: 4px solid #444;
             position: relative;
             margin: 10px auto;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
             transition: transform 0.5s ease;
         }
-
+        
         .cylinder.spinning {
-            animation: spin 0.5s linear infinite;
+            animation: spin 0.3s linear infinite;
         }
-
+        
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
+        
         .chamber {
             position: absolute;
-            width: 35px;
-            height: 35px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: #111;
             border: 2px solid #555;
             transition: all 0.3s ease;
         }
-
-        .chamber.active {
-            box-shadow: 0 0 15px #4ecdc4, inset 0 0 10px rgba(78, 205, 196, 0.3);
-            border-color: #4ecdc4;
+        
+        .chamber.current {
+            box-shadow: 0 0 15px #ff0000;
+            border-color: #ff0000;
         }
-
-        .chamber.fired {
-            background: #333;
-            border-color: #666;
-        }
-
-        .chamber:nth-child(1) { top: 10px; left: 50%; transform: translateX(-50%); }
-        .chamber:nth-child(2) { top: 35px; right: 25px; }
-        .chamber:nth-child(3) { bottom: 35px; right: 25px; }
-        .chamber:nth-child(4) { bottom: 10px; left: 50%; transform: translateX(-50%); }
-        .chamber:nth-child(5) { bottom: 35px; left: 25px; }
-        .chamber:nth-child(6) { top: 35px; left: 25px; }
-
+        
+        .chamber.fired { background: #333; border-color: #666; }
+        .chamber.bullet { background: #ff0000; border-color: #ff4444; }
+        
+        .chamber:nth-child(1) { top: 6px; left: 50%; transform: translateX(-50%); }
+        .chamber:nth-child(2) { top: 30px; right: 12px; }
+        .chamber:nth-child(3) { bottom: 30px; right: 12px; }
+        .chamber:nth-child(4) { bottom: 6px; left: 50%; transform: translateX(-50%); }
+        .chamber:nth-child(5) { bottom: 30px; left: 12px; }
+        .chamber:nth-child(6) { top: 30px; left: 12px; }
+        
         .center-pin {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             background: #666;
             border-radius: 50%;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         }
-
-        /* 玩家列表 */
-        .players-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .player-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .player-card.current {
-            border-color: #4ecdc4;
-            box-shadow: 0 0 15px rgba(78, 205, 196, 0.3);
-        }
-
-        .player-card.dead {
-            opacity: 0.5;
-            border-color: #ff0000;
-        }
-
-        .player-card.dead .player-name {
-            text-decoration: line-through;
-            color: #ff6b6b;
-        }
-
-        .player-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin: 0 auto 10px;
-        }
-
-        .player-card.dead .player-avatar {
-            background: #444;
-        }
-
-        .player-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .player-status {
-            font-size: 0.8rem;
-            color: #888;
-        }
-
-        .player-status.ready {
-            color: #4ecdc4;
-        }
-
-        .host-badge {
-            display: inline-block;
-            background: #f093fb;
-            color: #fff;
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            margin-left: 5px;
-        }
-
+        
         /* 消息区 */
         .message-area {
-            min-height: 60px;
-            padding: 15px;
+            min-height: 50px;
+            padding: 12px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
-            margin: 20px 0;
-            text-align: center;
-            font-size: 1.1rem;
-        }
-
-        .message-area.danger {
-            background: rgba(255, 0, 0, 0.2);
-            border: 1px solid rgba(255, 0, 0, 0.5);
-            color: #ff6b6b;
-            animation: shake 0.5s ease;
-        }
-
-        .message-area.success {
-            background: rgba(78, 205, 196, 0.2);
-            border: 1px solid rgba(78, 205, 196, 0.5);
-            color: #4ecdc4;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        /* 操作按钮 */
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .action-buttons .btn {
-            width: auto;
-            min-width: 150px;
-            margin: 0;
-        }
-
-        /* 侧边栏 */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .panel {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
-        }
-
-        .panel-title {
-            font-size: 1rem;
-            color: #888;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* 统计 */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #4ecdc4;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        /* 历史记录 */
-        .history-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            padding: 8px 0;
-            font-size: 0.85rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .history-item:last-child {
-            border-bottom: none;
-        }
-
-        .history-item.survived {
-            color: #4ecdc4;
-        }
-
-        .history-item.dead {
-            color: #ff6b6b;
-        }
-
-        /* 聊天 */
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 300px;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-        }
-
-        .chat-message {
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-        }
-
-        .chat-message .sender {
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .chat-message .time {
-            color: #666;
-            font-size: 0.7rem;
-            margin-left: 5px;
-        }
-
-        .chat-input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input-group input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #444;
-            border-radius: 5px;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-        }
-
-        .chat-input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .chat-input-group button {
-            padding: 10px 20px;
-            background: #667eea;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-            cursor: pointer;
-        }
-
-        /* 概率显示 */
-        .probability {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-
-        .probability.danger {
-            color: #ff6b6b;
-        }
-
-        /* 子弹选择 */
-        .bullet-selector {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 15px;
             margin: 15px 0;
             text-align: center;
+            font-size: 1rem;
+            border: 2px solid transparent;
         }
-
-        .bullet-selector-title {
+        
+        .message-area.danger {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: rgba(255, 0, 0, 0.5);
+            color: #ff6b6b;
+        }
+        
+        .message-area.success {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: rgba(78, 205, 196, 0.5);
+            color: #4ecdc4;
+        }
+        
+        /* 操作按钮 */
+        .action-area {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .action-title {
             color: #888;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin-bottom: 10px;
         }
-
+        
         .bullet-options {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
         }
-
+        
         .bullet-option {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: 2px solid #444;
             background: rgba(0, 0, 0, 0.3);
             color: #fff;
-            font-size: 1.2rem;
-            font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-
-        .bullet-option:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.2);
-        }
-
+        
         .bullet-option.selected {
             border-color: #ff0000;
             background: rgba(255, 0, 0, 0.3);
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
         }
-
-        .bullet-info {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #ff6b6b;
-        }
-
-        /* 闪烁效果 */
-        .flash {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 9999;
-        }
-
-        .flash.active {
-            animation: flash 0.3s ease;
-        }
-
-        @keyframes flash {
-            0% { opacity: 0; }
-            50% { opacity: 0.8; }
-            100% { opacity: 0; }
-        }
-
+        
         /* 错误提示 */
         .error-message {
             background: rgba(255, 0, 0, 0.2);
@@ -619,18 +397,32 @@
             margin-bottom: 15px;
             display: none;
         }
-
-        .error-message.show {
-            display: block;
-        }
+        
+        .error-message.show { display: block; }
     </style>
 </head>
 <body>
-    <div class="flash" id="flash"></div>
-
     <div class="container">
-        <h1>🔫 俄罗斯轮盘</h1>
-        <p class="subtitle">多人联机版 - 与好友一决生死</p>
+        <h1>🔫 俄罗斯轮盘 · 赌场版</h1>
+        <p class="subtitle">高风险高回报，赢家通吃！</p>
+        
+        <!-- 顶部状态栏 -->
+        <div class="top-bar" id="topBar" style="display: none;">
+            <div class="player-info">
+                <span class="label">💰 金币:</span>
+                <span class="value" id="playerCoins">200</span>
+            </div>
+            <div class="player-info">
+                <span class="label">💸 借贷:</span>
+                <span class="value debt" id="playerDebt">0</span>
+            </div>
+            <div class="player-info">
+                <span class="label">📊 净资产:</span>
+                <span class="value" id="playerNet">200</span>
+            </div>
+            <button class="btn-small btn-wage" id="wageBtn" onclick="claimWage()" disabled>领工资</button>
+            <button class="btn-small btn-loan" onclick="takeLoan()">借贷</button>
+        </div>
 
         <!-- 登录界面 -->
         <div class="login-screen" id="loginScreen">
@@ -641,95 +433,91 @@
                 <input type="text" id="playerName" placeholder="输入昵称" maxlength="10" value="玩家">
             </div>
 
-            <button class="btn btn-primary" onclick="createRoom()">创建房间</button>
+            <button class="btn btn-success" onclick="createRoom()">创建房间</button>
             
-            <div class="divider">或</div>
+            <div style="margin: 15px 0; color: #666;">- 或 -</div>
             
             <div class="input-group">
                 <label>房间号</label>
                 <input type="text" id="roomId" placeholder="输入6位房间号" maxlength="6">
             </div>
             
-            <button class="btn btn-secondary" onclick="joinRoom()">加入房间</button>
+            <button class="btn btn-primary" onclick="joinRoom()">加入房间</button>
         </div>
 
         <!-- 游戏界面 -->
         <div class="game-screen" id="gameScreen">
-            <div class="game-layout">
-                <div class="main-area">
-                    <div class="room-info">
-                        <div class="room-code">
-                            <span>房间号</span>
-                            <span id="displayRoomId">------</span>
-                        </div>
-                        <button class="btn btn-primary" onclick="copyRoomId()" style="width:auto;padding:10px 20px;font-size:0.9rem;">复制房间号</button>
+            <div class="game-panel">
+                <!-- 玩家区域 -->
+                <div class="players-area">
+                    <div class="player-card" id="playerCard">
+                        <div class="player-avatar">🙂</div>
+                        <div class="player-name">你</div>
+                        <div class="player-coins" id="playerBetCoins">金币: 200</div>
+                        <div class="player-bet" id="playerCurrentBet">投注: 0</div>
                     </div>
 
-                    <div class="players-grid" id="playersGrid"></div>
-
-                    <div class="revolver-container">
-                        <div class="revolver">
-                            <div class="cylinder" id="cylinder">
-                                <div class="chamber" id="chamber-0"></div>
-                                <div class="chamber" id="chamber-1"></div>
-                                <div class="chamber" id="chamber-2"></div>
-                                <div class="chamber" id="chamber-3"></div>
-                                <div class="chamber" id="chamber-4"></div>
-                                <div class="chamber" id="chamber-5"></div>
-                                <div class="center-pin"></div>
-                            </div>
-                        </div>
+                    <div class="vs-area">
+                        <div class="vs-badge">VS</div>
+                        <div class="pot-display" id="potDisplay">💰 0</div>
                     </div>
 
-                    <div class="probability" id="probability"></div>
-
-                    <!-- 子弹数量选择（仅房主在准备阶段可见） -->
-                    <div class="bullet-selector" id="bulletSelector" style="display: none;">
-                        <div class="bullet-selector-title">🎯 选择子弹数量（1-5发）</div>
-                        <div class="bullet-options" id="bulletOptions"></div>
-                        <div class="bullet-info" id="bulletInfo"></div>
+                    <div class="player-card" id="enemyCard">
+                        <div class="player-avatar">🤖</div>
+                        <div class="player-name">对手</div>
+                        <div class="player-coins" id="enemyBetCoins">金币: ???</div>
+                        <div class="player-bet" id="enemyCurrentBet">投注: ???</div>
                     </div>
-
-                    <div class="message-area" id="messageArea">等待玩家加入...</div>
-
-                    <div class="action-buttons" id="actionButtons"></div>
                 </div>
 
-                <div class="sidebar">
-                    <div class="panel">
-                        <div class="panel-title">📊 游戏统计</div>
-                        <div class="stats-grid">
-                            <div class="stat">
-                                <div class="stat-value" id="statRounds">0</div>
-                                <div class="stat-label">回合</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-value" id="statAlive">0</div>
-                                <div class="stat-label">存活</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-value" id="statDead">0</div>
-                                <div class="stat-label">死亡</div>
-                            </div>
+                <!-- 投注区 -->
+                <div class="betting-area" id="bettingArea" style="display: none;">
+                    <div class="betting-title">💎 点击按钮累加投注（底注1金币）</div>
+                    <div class="bet-buttons">
+                        <button class="bet-btn" onclick="placeBet(1)">1</button>
+                        <button class="bet-btn" onclick="placeBet(5)">5</button>
+                        <button class="bet-btn" onclick="placeBet(10)">10</button>
+                        <button class="bet-btn" onclick="placeBet(20)">20</button>
+                        <button class="bet-btn" onclick="placeBet(50)">50</button>
+                        <button class="bet-btn" onclick="placeBet(100)">100</button>
+                    </div>
+                    <div class="bet-info" id="betInfo">当前投注: 0 | 总计: 1（含底注）</div>
+                </div>
+
+                <!-- 转轮 -->
+                <div class="revolver-section">
+                    <div class="cylinder-container">
+                        <div class="cylinder" id="cylinder">
+                            <div class="chamber" id="chamber-0"></div>
+                            <div class="chamber" id="chamber-1"></div>
+                            <div class="chamber" id="chamber-2"></div>
+                            <div class="chamber" id="chamber-3"></div>
+                            <div class="chamber" id="chamber-4"></div>
+                            <div class="chamber" id="chamber-5"></div>
+                            <div class="center-pin"></div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="panel">
-                        <div class="panel-title">📜 历史记录</div>
-                        <div class="history-list" id="historyList">
-                            <div style="color:#666;text-align:center;padding:20px;">暂无记录</div>
-                        </div>
+                <!-- 消息区 -->
+                <div class="message-area" id="messageArea">等待玩家加入...</div>
+
+                <!-- 操作区 -->
+                <div class="action-area" id="actionArea">
+                    <div class="action-title" id="actionTitle">选择你的行动</div>
+                    
+                    <!-- 子弹选择 -->
+                    <div class="bullet-options" id="bulletOptions" style="display: none;">
+                        <button class="bullet-option" onclick="selectBullet(1)">1</button>
+                        <button class="bullet-option" onclick="selectBullet(2)">2</button>
+                        <button class="bullet-option" onclick="selectBullet(3)">3</button>
+                        <button class="bullet-option" onclick="selectBullet(4)">4</button>
+                        <button class="bullet-option" onclick="selectBullet(5)">5</button>
                     </div>
-
-                    <div class="panel">
-                        <div class="panel-title">💬 聊天</div>
-                        <div class="chat-container">
-                            <div class="chat-messages" id="chatMessages"></div>
-                            <div class="chat-input-group">
-                                <input type="text" id="chatInput" placeholder="输入消息..." maxlength="50" onkeypress="if(event.key==='Enter')sendChat()">
-                                <button onclick="sendChat()">发送</button>
-                            </div>
-                        </div>
+                    
+                    <!-- 主要按钮 -->
+                    <div id="mainButtons">
+                        <button class="btn btn-success" id="readyBtn" onclick="setReady()">✓ 准备（扣除底注）</button>
                     </div>
                 </div>
             </div>
@@ -742,49 +530,9 @@
         let currentPlayerId = null;
         let isHost = false;
         let gameState = null;
+        let playerData = { coins: 200, debt: 0 };
         let selectedBulletCount = 1;
-
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-        function playSound(type) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            switch(type) {
-                case 'click':
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.05);
-                    break;
-                case 'bang':
-                    const noise = audioContext.createBufferSource();
-                    const bufferSize = audioContext.sampleRate * 0.5;
-                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                    noise.buffer = buffer;
-                    const noiseGain = audioContext.createGain();
-                    noiseGain.gain.setValueAtTime(0.8, audioContext.currentTime);
-                    noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                    oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
-                    oscillator.type = 'sawtooth';
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                    noise.connect(noiseGain);
-                    noiseGain.connect(audioContext.destination);
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    noise.start(audioContext.currentTime);
-                    oscillator.start(audioContext.currentTime);
-                    noise.stop(audioContext.currentTime + 0.5);
-                    oscillator.stop(audioContext.currentTime + 0.5);
-                    break;
-            }
-        }
+        let currentBet = 0;
 
         function showError(message) {
             const errorEl = document.getElementById('errorMessage');
@@ -795,14 +543,11 @@
 
         function createRoom() {
             const playerName = document.getElementById('playerName').value.trim();
-            if (!playerName) {
-                showError('请输入昵称');
-                return;
-            }
-            connectWebSocket();
-            ws.onopen = () => {
+            if (!playerName) { showError('请输入昵称'); return; }
+            
+            connectWebSocket(() => {
                 ws.send(JSON.stringify({ type: 'createRoom', playerName: playerName }));
-            };
+            });
         }
 
         function joinRoom() {
@@ -810,21 +555,25 @@
             const roomId = document.getElementById('roomId').value.trim().toUpperCase();
             if (!playerName) { showError('请输入昵称'); return; }
             if (!roomId) { showError('请输入房间号'); return; }
-            connectWebSocket();
-            ws.onopen = () => {
+            
+            connectWebSocket(() => {
                 ws.send(JSON.stringify({ type: 'joinRoom', roomId: roomId, playerName: playerName }));
-            };
+            });
         }
 
-        function connectWebSocket() {
+        function connectWebSocket(onOpen) {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}`;
             ws = new WebSocket(wsUrl);
+            
+            ws.onopen = onOpen;
+            
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 handleMessage(data);
             };
-            ws.onerror = () => showError('连接失败，请刷新重试');
+            
+            ws.onerror = () => showError('连接失败');
             ws.onclose = () => showError('连接已断开');
         }
 
@@ -834,32 +583,50 @@
                     currentRoomId = data.data.roomId;
                     currentPlayerId = data.data.playerId;
                     isHost = true;
+                    playerData = data.data.playerData;
                     showGameScreen();
                     break;
+                    
                 case 'roomJoined':
                     currentRoomId = data.data.roomId;
                     currentPlayerId = data.data.playerId;
                     isHost = false;
+                    playerData = data.data.playerData;
                     showGameScreen();
                     break;
+                    
                 case 'gameState':
                     gameState = data.data;
-                    // 根据游戏状态更新 isHost
                     const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
                     if (currentPlayer) {
                         isHost = currentPlayer.isHost;
+                        playerData.coins = currentPlayer.coins;
+                        playerData.debt = currentPlayer.debt;
+                        currentBet = currentPlayer.currentBet || 0;
                     }
-                    updateGameUI();
+                    updateUI();
                     break;
-                case 'bulletCountSet':
-                    selectedBulletCount = data.data.count;
-                    updateBulletSelectionUI();
-                    break;
-                case 'chat':
-                    addChatMessage(data.data);
-                    break;
+                    
                 case 'error':
                     showError(data.data.message);
+                    break;
+                    
+                case 'wageClaimed':
+                    playerData.coins = data.data.coins;
+                    updateTopBar();
+                    alert(data.data.message);
+                    break;
+                    
+                case 'loanTaken':
+                    playerData.coins = data.data.coins;
+                    playerData.debt = data.data.debt;
+                    updateTopBar();
+                    alert(data.data.message);
+                    break;
+                    
+                case 'betPlaced':
+                    currentBet = data.data.totalBet;
+                    updateBetInfo();
                     break;
             }
         }
@@ -867,224 +634,181 @@
         function showGameScreen() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('gameScreen').style.display = 'block';
-            document.getElementById('displayRoomId').textContent = currentRoomId;
+            document.getElementById('topBar').style.display = 'flex';
+            updateTopBar();
         }
 
-        function copyRoomId() {
-            navigator.clipboard.writeText(currentRoomId).then(() => alert('房间号已复制！'));
+        function updateTopBar() {
+            document.getElementById('playerCoins').textContent = playerData.coins;
+            document.getElementById('playerDebt').textContent = playerData.debt;
+            document.getElementById('playerNet').textContent = playerData.coins - Math.floor(playerData.debt * (13/9));
+            
+            // 工资按钮状态
+            const wageBtn = document.getElementById('wageBtn');
+            // 这里简化处理，实际需要服务器返回状态
         }
 
-        function updateGameUI() {
-            if (!gameState) return;
-            updatePlayersGrid();
-
-            const msgEl = document.getElementById('messageArea');
-            msgEl.textContent = gameState.message;
-            msgEl.className = 'message-area';
-            if (gameState.message.includes('死了') || gameState.message.includes('BANG')) {
-                msgEl.classList.add('danger');
-                playSound('bang');
-                document.getElementById('flash').classList.add('active');
-                setTimeout(() => document.getElementById('flash').classList.remove('active'), 300);
-            } else if (gameState.message.includes('存活') || gameState.message.includes('获胜')) {
-                msgEl.classList.add('success');
-                playSound('click');
-            }
-
-            const aliveCount = gameState.players.filter(p => p.isAlive).length;
-            const deadCount = gameState.players.filter(p => !p.isAlive).length;
-            document.getElementById('statRounds').textContent = gameState.rounds;
-            document.getElementById('statAlive').textContent = aliveCount;
-            document.getElementById('statDead').textContent = deadCount;
-
-            updateHistory();
-            updateProbability();
+        function updateUI() {
+            updateTopBar();
+            updatePlayers();
             updateCylinder();
+            updateMessage();
             updateActionButtons();
+            updatePot();
         }
 
-        function updatePlayersGrid() {
-            const grid = document.getElementById('playersGrid');
-            grid.innerHTML = '';
-            gameState.players.forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'player-card';
-                if (player.isCurrent) card.classList.add('current');
-                if (!player.isAlive) card.classList.add('dead');
-                card.innerHTML = `
-                    <div class="player-avatar">${player.name.charAt(0)}</div>
-                    <div class="player-name">${player.name}${player.isHost ? '<span class="host-badge">房主</span>' : ''}</div>
-                    <div class="player-status ${player.isReady ? 'ready' : ''}">${player.isAlive ? (player.isReady ? '✓ 已准备' : '等待中') : '💀 已死亡'}</div>
-                `;
-                grid.appendChild(card);
-            });
+        function updatePlayers() {
+            if (!gameState) return;
+            
+            const player = gameState.players.find(p => p.id === currentPlayerId);
+            const enemy = gameState.players.find(p => p.id !== currentPlayerId);
+            
+            if (player) {
+                document.getElementById('playerBetCoins').textContent = `金币: ${player.coins}`;
+                document.getElementById('playerCurrentBet').textContent = `投注: ${player.currentBet || 0}`;
+                document.getElementById('playerCard').classList.toggle('active', player.isCurrent);
+                document.getElementById('playerCard').classList.toggle('dead', !player.isAlive);
+            }
+            
+            if (enemy) {
+                document.getElementById('enemyBetCoins').textContent = `金币: ${enemy.coins}`;
+                document.getElementById('enemyCurrentBet').textContent = `投注: ${enemy.currentBet || 0}`;
+                document.getElementById('enemyCard').classList.toggle('active', enemy.isCurrent);
+                document.getElementById('enemyCard').classList.toggle('dead', !enemy.isAlive);
+            }
+        }
+
+        function updatePot() {
+            if (gameState) {
+                document.getElementById('potDisplay').textContent = `💰 ${gameState.pot || 0}`;
+            }
         }
 
         function updateCylinder() {
-            const cylinder = document.getElementById('cylinder');
+            if (!gameState) return;
             const rotation = gameState.currentChamber * 60;
-            cylinder.style.transform = `rotate(${rotation}deg)`;
+            document.getElementById('cylinder').style.transform = `rotate(${rotation}deg)`;
+            
             for (let i = 0; i < 6; i++) {
                 const chamber = document.getElementById(`chamber-${i}`);
-                chamber.classList.remove('active');
+                chamber.classList.remove('active', 'fired', 'bullet');
                 if (i === gameState.currentChamber) chamber.classList.add('active');
             }
         }
 
-        function updateProbability() {
-            const probEl = document.getElementById('probability');
-            if (gameState.phase !== 'playing') {
-                probEl.textContent = '';
-                return;
+        function updateMessage() {
+            if (gameState) {
+                document.getElementById('messageArea').textContent = gameState.message;
             }
-            const remaining = 6 - gameState.currentChamber;
-            const prob = (1 / remaining * 100).toFixed(1);
-            probEl.textContent = `💀 当前死亡概率: ${prob}% (1/${remaining})`;
-            probEl.className = 'probability' + (parseFloat(prob) > 30 ? ' danger' : '');
-        }
-
-        function updateHistory() {
-            const list = document.getElementById('historyList');
-            if (gameState.history.length === 0) {
-                list.innerHTML = '<div style="color:#666;text-align:center;padding:20px;">暂无记录</div>';
-                return;
-            }
-            list.innerHTML = gameState.history.slice().reverse().map(h => `
-                <div class="history-item ${h.result}">第${h.round}轮: ${h.player} - ${h.result === 'dead' ? '💀 死亡' : '✓ 存活'} (${h.chamber}/6)</div>
-            `).join('');
-        }
-
-        function updateBulletSelector() {
-            const selector = document.getElementById('bulletSelector');
-            const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
-            
-            // 只有房主在准备阶段可以看到子弹选择器
-            if (isHost && gameState.phase === 'ready') {
-                selector.style.display = 'block';
-                renderBulletOptions();
-            } else {
-                selector.style.display = 'none';
-            }
-        }
-
-        function renderBulletOptions() {
-            const container = document.getElementById('bulletOptions');
-            container.innerHTML = '';
-            
-            for (let i = 1; i <= 5; i++) {
-                const btn = document.createElement('div');
-                btn.className = 'bullet-option' + (i === selectedBulletCount ? ' selected' : '');
-                btn.textContent = i;
-                btn.onclick = () => selectBulletCount(i);
-                container.appendChild(btn);
-            }
-            
-            updateBulletInfo();
-        }
-
-        function selectBulletCount(count) {
-            selectedBulletCount = count;
-            updateBulletSelectionUI();
-            // 发送给服务器
-            ws.send(JSON.stringify({ type: 'setBulletCount', count: count }));
-        }
-
-        function updateBulletSelectionUI() {
-            const options = document.querySelectorAll('.bullet-option');
-            options.forEach((opt, idx) => {
-                opt.classList.toggle('selected', idx + 1 === selectedBulletCount);
-            });
-            updateBulletInfo();
-        }
-
-        function updateBulletInfo() {
-            const info = document.getElementById('bulletInfo');
-            const deathProb = (selectedBulletCount / 6 * 100).toFixed(1);
-            info.textContent = `${selectedBulletCount}发子弹 = ${deathProb}% 死亡概率`;
         }
 
         function updateActionButtons() {
-            const buttons = document.getElementById('actionButtons');
-            const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
-            buttons.innerHTML = '';
-
-            // 更新子弹选择器显示
-            updateBulletSelector();
-
-            if (gameState.phase === 'waiting') {
-                if (!currentPlayer?.isReady) {
-                    buttons.innerHTML = '<button class="btn btn-success" onclick="setReady()">✓ 准备</button>';
-                } else {
-                    buttons.innerHTML = '<button class="btn" disabled>已准备，等待其他玩家...</button>';
-                }
-            } else if (gameState.phase === 'ready') {
-                if (isHost) {
-                    buttons.innerHTML = `<button class="btn btn-primary" onclick="startGame()">开始游戏 (${selectedBulletCount}发子弹)</button>`;
-                } else {
-                    buttons.innerHTML = '<button class="btn" disabled>等待房主开始游戏...</button>';
-                }
-            } else if (gameState.phase === 'playing') {
-                if (currentPlayer?.isCurrent && currentPlayer?.isAlive) {
-                    buttons.innerHTML = '<button class="btn btn-danger" onclick="fire()">🔫 扣动扳机</button>';
-                } else if (!currentPlayer?.isAlive) {
-                    buttons.innerHTML = '<button class="btn" disabled>你已死亡</button>';
-                } else {
-                    buttons.innerHTML = '<button class="btn" disabled>等待其他玩家...</button>';
-                }
-            } else if (gameState.phase === 'ended') {
-                // 检查是否是赢家（上一局的存活者）
-                const winner = gameState.players.find(p => p.isAlive);
-                const isWinner = winner && winner.id === currentPlayerId;
-                
-                if (isWinner) {
-                    buttons.innerHTML = `
-                        <div style="margin-bottom: 10px; color: #ffd700;">🏆 你是赢家！请设置下一局子弹数量</div>
-                        <button class="btn btn-primary" onclick="nextGame()">开始下一局</button>
-                    `;
-                } else if (isHost) {
-                    buttons.innerHTML = '<button class="btn btn-primary" onclick="resetGame()">再来一局</button>';
-                } else {
-                    buttons.innerHTML = '<button class="btn" disabled>等待赢家开始下一局...</button>';
-                }
+            if (!gameState) return;
+            
+            const buttonsDiv = document.getElementById('mainButtons');
+            const bulletOptions = document.getElementById('bulletOptions');
+            const bettingArea = document.getElementById('bettingArea');
+            
+            // 重置显示
+            bulletOptions.style.display = 'none';
+            bettingArea.style.display = 'none';
+            
+            switch(gameState.phase) {
+                case 'waiting':
+                case 'betting':
+                    bettingArea.style.display = 'block';
+                    updateBetInfo();
+                    buttonsDiv.innerHTML = '<button class="btn btn-success" id="readyBtn" onclick="setReady()">✓ 准备（扣除底注）</button>';
+                    break;
+                    
+                case 'ready':
+                    if (isHost) {
+                        bulletOptions.style.display = 'flex';
+                        buttonsDiv.innerHTML = `<button class="btn btn-primary" onclick="startGame()">开始游戏 (${selectedBulletCount}发子弹)</button>`;
+                    } else {
+                        buttonsDiv.innerHTML = '<button class="btn" disabled>等待房主开始...</button>';
+                    }
+                    break;
+                    
+                case 'playing':
+                    const player = gameState.players.find(p => p.id === currentPlayerId);
+                    if (player?.isCurrent && player?.isAlive) {
+                        buttonsDiv.innerHTML = '<button class="btn btn-danger" onclick="fire()">🔫 扣动扳机</button>';
+                    } else if (!player?.isAlive) {
+                        buttonsDiv.innerHTML = '<button class="btn" disabled>你已死亡</button>';
+                    } else {
+                        buttonsDiv.innerHTML = '<button class="btn" disabled>等待...</button>';
+                    }
+                    break;
+                    
+                case 'ended':
+                    const winner = gameState.players.find(p => p.isAlive);
+                    const isWinner = winner && winner.id === currentPlayerId;
+                    
+                    if (isWinner) {
+                        buttonsDiv.innerHTML = '<button class="btn btn-primary" onclick="nextGame()">🏆 开始下一局</button>';
+                    } else {
+                        buttonsDiv.innerHTML = '<button class="btn" disabled>等待赢家...</button>';
+                    }
+                    break;
             }
         }
 
+        function updateBetInfo() {
+            const total = 1 + currentBet;
+            document.getElementById('betInfo').textContent = `当前投注: ${currentBet} | 总计: ${total}（含底注1）`;
+        }
+
+        function placeBet(amount) {
+            if (!ws) return;
+            ws.send(JSON.stringify({ type: 'placeBet', amount: amount }));
+        }
+
+        function selectBullet(count) {
+            selectedBulletCount = count;
+            document.querySelectorAll('.bullet-option').forEach((btn, idx) => {
+                btn.classList.toggle('selected', idx + 1 === count);
+            });
+        }
+
         function setReady() {
+            if (!ws) return;
             ws.send(JSON.stringify({ type: 'ready' }));
         }
 
         function startGame() {
+            if (!ws) return;
             ws.send(JSON.stringify({ type: 'startGame' }));
         }
 
         function fire() {
-            ws.send(JSON.stringify({ type: 'fire' }));
-        }
-
-        function resetGame() {
-            ws.send(JSON.stringify({ type: 'resetGame' }));
+            if (!ws) return;
+            document.getElementById('cylinder').classList.add('spinning');
+            setTimeout(() => {
+                document.getElementById('cylinder').classList.remove('spinning');
+                ws.send(JSON.stringify({ type: 'fire' }));
+            }, 500);
         }
 
         function nextGame() {
+            if (!ws) return;
             ws.send(JSON.stringify({ type: 'nextGame' }));
         }
 
-        function sendChat() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            if (!message) return;
-            ws.send(JSON.stringify({ type: 'chat', message: message }));
-            input.value = '';
+        function claimWage() {
+            if (!ws) return;
+            ws.send(JSON.stringify({ type: 'claimWage' }));
         }
 
-        function addChatMessage(data) {
-            const container = document.getElementById('chatMessages');
-            const msg = document.createElement('div');
-            msg.className = 'chat-message';
-            msg.innerHTML = `<span class="sender">${data.player}</span>: ${data.message}<span class="time">${data.time}</span>`;
-            container.appendChild(msg);
-            container.scrollTop = container.scrollHeight;
+        function takeLoan() {
+            if (!ws) return;
+            if (confirm('确定要借贷吗？\n借900金币，需还1300金币\n每次胜利将扣除35%用于还款')) {
+                ws.send(JSON.stringify({ type: 'takeLoan' }));
+            }
         }
+
+        // 初始化
+        selectBullet(1);
     </script>
 </body>
 </html>
