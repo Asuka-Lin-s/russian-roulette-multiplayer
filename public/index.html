@@ -6,7 +6,6 @@
     <title>俄罗斯轮盘 - 赌场版</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             min-height: 100vh;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -14,533 +13,92 @@
             color: #fff;
             overflow-x: hidden;
         }
-        
         .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+        h1 { text-align: center; font-size: 2rem; margin-bottom: 5px; text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+        .subtitle { text-align: center; color: #888; margin-bottom: 15px; font-size: 0.85rem; }
         
-        h1 {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 5px;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            letter-spacing: 2px;
-        }
+        .login-screen { max-width: 400px; margin: 50px auto; background: rgba(255,255,255,0.05); padding: 40px; border-radius: 15px; }
+        .login-title { text-align: center; font-size: 1.5rem; margin-bottom: 25px; color: #ffd700; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: #aaa; font-size: 0.9rem; }
+        .input-group input { width: 100%; padding: 12px; border: 2px solid #444; border-radius: 8px; background: rgba(0,0,0,0.3); color: #fff; font-size: 1rem; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-primary { background: linear-gradient(145deg, #667eea, #764ba2); color: white; }
+        .btn-success { background: linear-gradient(145deg, #28a745, #20c997); color: white; }
+        .btn-danger { background: linear-gradient(145deg, #ff0000, #cc0000); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .subtitle {
-            text-align: center;
-            color: #888;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
-        }
-        
-        /* 登录界面 */
-        .login-screen {
-            max-width: 400px;
-            margin: 50px auto;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .login-title {
-            text-align: center;
-            font-size: 1.5rem;
-            margin-bottom: 25px;
-            color: #ffd700;
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-        
-        .input-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #444;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(145deg, #667eea, #764ba2);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-success {
-            background: linear-gradient(145deg, #28a745, #20c997);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        
-        .error-message {
-            background: rgba(255, 0, 0, 0.2);
-            border: 1px solid rgba(255, 0, 0, 0.5);
-            color: #ff6b6b;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: none;
-        }
-        
+        .error-message { background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.5); color: #ff6b6b; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; }
         .error-message.show { display: block; }
-        
-        .success-message {
-            background: rgba(78, 205, 196, 0.2);
-            border: 1px solid rgba(78, 205, 196, 0.5);
-            color: #4ecdc4;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: none;
-        }
-        
+        .success-message { background: rgba(78,205,196,0.2); border: 1px solid rgba(78,205,196,0.5); color: #4ecdc4; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; }
         .success-message.show { display: block; }
         
-        /* 资产显示 */
-        .assets-display {
-            background: linear-gradient(145deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+        .assets-display { background: linear-gradient(145deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05)); border: 2px solid rgba(255,215,0,0.3); border-radius: 15px; padding: 20px; margin-bottom: 20px; text-align: center; }
+        .assets-title { color: #ffd700; font-size: 0.9rem; margin-bottom: 10px; }
+        .assets-value { font-size: 2.5rem; font-weight: bold; color: #ffd700; }
+        .assets-detail { display: flex; justify-content: center; gap: 30px; margin-top: 15px; font-size: 0.9rem; }
+        .assets-detail .item { color: #aaa; }
+        .assets-detail .item span { color: #fff; font-weight: bold; }
+        .assets-detail .item.debt span { color: #ff6b6b; }
         
-        .assets-title {
-            color: #ffd700;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
+        .lobby-screen, .game-screen { display: none; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px 20px; margin-bottom: 15px; }
+        .user-name { font-weight: bold; color: #4ecdc4; }
+        .btn-small { padding: 8px 15px; border: none; border-radius: 5px; font-size: 0.85rem; cursor: pointer; margin-left: 5px; }
+        .btn-wage { background: linear-gradient(145deg, #ffd700, #ffaa00); color: #000; font-weight: bold; }
+        .btn-loan { background: linear-gradient(145deg, #ff6b6b, #ee5a5a); color: white; }
+        .btn-logout { background: #666; color: white; }
         
-        .assets-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
+        .game-panel { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; margin-bottom: 15px; }
+        .section-title { color: #888; font-size: 1rem; margin-bottom: 15px; text-align: center; }
+        .room-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .room-input-group input { flex: 1; padding: 12px; border: 2px solid #444; border-radius: 8px; background: rgba(0,0,0,0.3); color: #fff; font-size: 1rem; text-align: center; }
         
-        .assets-detail {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
+        .room-info { text-align: center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+        .room-id-display { font-size: 1.5rem; font-weight: bold; color: #4ecdc4; letter-spacing: 3px; }
+        .players-area { display: grid; grid-template-columns: 1fr 200px 1fr; gap: 15px; align-items: center; margin-bottom: 20px; }
+        @media (max-width: 768px) { .players-area { grid-template-columns: 1fr; } }
+        .player-card { background: rgba(0,0,0,0.3); border-radius: 15px; padding: 15px; text-align: center; border: 3px solid transparent; }
+        .player-card.active { border-color: #4ecdc4; box-shadow: 0 0 30px rgba(78,205,196,0.3); }
+        .player-card.dead { border-color: #ff0000; opacity: 0.6; }
+        .player-avatar { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(145deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 10px; }
+        .player-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
+        .player-coins { font-size: 0.9rem; color: #ffd700; }
+        .player-bet { font-size: 0.8rem; color: #ff6b6b; margin-top: 3px; }
+        .vs-area { text-align: center; }
+        .vs-badge { font-size: 1.5rem; font-weight: bold; color: #ff0000; }
+        .pot-display { background: linear-gradient(145deg, #ffd700, #ffaa00); color: #000; padding: 8px 15px; border-radius: 20px; font-size: 1.1rem; font-weight: bold; margin-top: 8px; }
         
-        .assets-detail .item {
-            color: #aaa;
-        }
+        .betting-area { text-align: center; margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .betting-title { color: #888; font-size: 0.9rem; margin-bottom: 10px; }
+        .bet-buttons { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .bet-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #444; background: rgba(0,0,0,0.3); color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .bet-btn:hover { border-color: #ffd700; background: rgba(255,215,0,0.2); }
+        .bet-info { color: #aaa; font-size: 0.85rem; }
         
-        .assets-detail .item span {
-            color: #fff;
-            font-weight: bold;
-        }
-        
-        .assets-detail .item.debt span {
-            color: #ff6b6b;
-        }
-        
-        /* 大厅界面 */
-        .lobby-screen {
-            display: none;
-        }
-        
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 10px 20px;
-            margin-bottom: 15px;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .user-name {
-            font-weight: bold;
-            color: #4ecdc4;
-        }
-        
-        .btn-small {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-wage {
-            background: linear-gradient(145deg, #ffd700, #ffaa00);
-            color: #000;
-            font-weight: bold;
-        }
-        
-        .btn-wage:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .btn-loan {
-            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
-            color: white;
-        }
-        
-        .btn-logout {
-            background: #666;
-            color: white;
-        }
-        
-        .game-panel {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-        
-        .section-title {
-            color: #888;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .room-input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .room-input-group input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #444;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 1rem;
-            text-align: center;
-            letter-spacing: 3px;
-        }
-        
-        /* 游戏界面 */
-        .game-screen {
-            display: none;
-        }
-        
-        .room-info {
-            text-align: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-        }
-        
-        .room-id-display {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #4ecdc4;
-            letter-spacing: 3px;
-        }
-        
-        .players-area {
-            display: grid;
-            grid-template-columns: 1fr 200px 1fr;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .players-area { grid-template-columns: 1fr; }
-        }
-        
-        .player-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            border: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .player-card.active {
-            border-color: #4ecdc4;
-            box-shadow: 0 0 30px rgba(78, 205, 196, 0.3);
-        }
-        
-        .player-card.dead {
-            border-color: #ff0000;
-            opacity: 0.6;
-        }
-        
-        .player-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin: 0 auto 10px;
-        }
-        
-        .player-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 5px;
-        }
-        
-        .player-coins {
-            font-size: 0.9rem;
-            color: #ffd700;
-        }
-        
-        .player-bet {
-            font-size: 0.8rem;
-            color: #ff6b6b;
-            margin-top: 3px;
-        }
-        
-        .vs-area {
-            text-align: center;
-        }
-        
-        .vs-badge {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #ff0000;
-        }
-        
-        .pot-display {
-            background: linear-gradient(145deg, #ffd700, #ffaa00);
-            color: #000;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-top: 8px;
-        }
-        
-        .betting-area {
-            text-align: center;
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-        
-        .betting-title {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-        
-        .bet-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-        }
-        
-        .bet-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid #444;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .bet-btn:hover {
-            border-color: #ffd700;
-            background: rgba(255, 215, 0, 0.2);
-        }
-        
-        .bet-info {
-            color: #aaa;
-            font-size: 0.85rem;
-        }
-        
-        .revolver-section {
-            text-align: center;
-            margin: 15px 0;
-        }
-        
-        .cylinder-container {
-            width: 160px;
-            height: 160px;
-            margin: 0 auto 10px;
-        }
-        
-        .cylinder {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-            border: 4px solid #444;
-            position: relative;
-            margin: 10px auto;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            transition: transform 0.5s ease;
-        }
-        
-        .cylinder.spinning {
-            animation: spin 0.3s linear infinite;
-        }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .chamber {
-            position: absolute;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: #111;
-            border: 2px solid #555;
-            transition: all 0.3s ease;
-        }
-        
-        .chamber.current {
-            box-shadow: 0 0 15px #ff0000;
-            border-color: #ff0000;
-        }
-        
+        .revolver-section { text-align: center; margin: 15px 0; }
+        .cylinder-container { width: 160px; height: 160px; margin: 0 auto 10px; }
+        .cylinder { width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(145deg, #2a2a3e, #1a1a2e); border: 4px solid #444; position: relative; margin: 10px auto; transition: transform 0.5s ease; }
+        .cylinder.spinning { animation: spin 0.3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .chamber { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: #111; border: 2px solid #555; }
+        .chamber.current { box-shadow: 0 0 15px #ff0000; border-color: #ff0000; }
         .chamber.fired { background: #333; border-color: #666; }
         .chamber.bullet { background: #ff0000; border-color: #ff4444; }
-        
         .chamber:nth-child(1) { top: 6px; left: 50%; transform: translateX(-50%); }
         .chamber:nth-child(2) { top: 30px; right: 12px; }
         .chamber:nth-child(3) { bottom: 30px; right: 12px; }
         .chamber:nth-child(4) { bottom: 6px; left: 50%; transform: translateX(-50%); }
         .chamber:nth-child(5) { bottom: 30px; left: 12px; }
         .chamber:nth-child(6) { top: 30px; left: 12px; }
+        .center-pin { position: absolute; width: 22px; height: 22px; background: #666; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         
-        .center-pin {
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            background: #666;
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .message-area {
-            min-height: 50px;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
-            font-size: 1rem;
-            border: 2px solid transparent;
-        }
-        
-        .message-area.danger {
-            background: rgba(255, 0, 0, 0.2);
-            border-color: rgba(255, 0, 0, 0.5);
-            color: #ff6b6b;
-        }
-        
-        .message-area.success {
-            background: rgba(78, 205, 196, 0.2);
-            border-color: rgba(78, 205, 196, 0.5);
-            color: #4ecdc4;
-        }
-        
-        .action-area {
-            text-align: center;
-            margin-top: 15px;
-        }
-        
-        .action-title {
-            color: #888;
-            font-size: 0.85rem;
-            margin-bottom: 10px;
-        }
-        
-        .bullet-options {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .bullet-option {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #444;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        
-        .bullet-option.selected {
-            border-color: #ff0000;
-            background: rgba(255, 0, 0, 0.3);
-        }
+        .message-area { min-height: 50px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 10px; margin: 15px 0; text-align: center; font-size: 1rem; }
+        .action-area { text-align: center; margin-top: 15px; }
+        .action-title { color: #888; font-size: 0.85rem; margin-bottom: 10px; }
+        .bullet-options { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .bullet-option { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #444; background: rgba(0,0,0,0.3); color: #fff; font-size: 1rem; cursor: pointer; }
+        .bullet-option.selected { border-color: #ff0000; background: rgba(255,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -553,17 +111,14 @@
             <div class="login-title">🎰 玩家登录</div>
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
-            
             <div class="input-group">
                 <label>昵称</label>
                 <input type="text" id="loginName" placeholder="输入昵称" maxlength="10">
             </div>
-            
             <div class="input-group">
                 <label>密码</label>
                 <input type="password" id="loginPassword" placeholder="输入密码" maxlength="20">
             </div>
-            
             <button class="btn btn-primary" onclick="login()">登录 / 注册</button>
         </div>
         
@@ -574,13 +129,11 @@
                     <span class="user-name" id="lobbyUserName">玩家</span>
                 </div>
                 <div>
-                    <button class="btn-small btn-wage" id="lobbyWageBtn" onclick="claimWage()" disabled>领工资</button>
+                    <button class="btn-small btn-wage" id="lobbyWageBtn" onclick="claimWage()">领工资</button>
                     <button class="btn-small btn-loan" onclick="takeLoan()">借贷</button>
                     <button class="btn-small btn-logout" onclick="logout()">退出</button>
                 </div>
             </div>
-            
-            <!-- 资产显示 -->
             <div class="assets-display">
                 <div class="assets-title">💰 我的资产</div>
                 <div class="assets-value" id="totalAssets">200</div>
@@ -590,18 +143,14 @@
                     <div class="item">净资产: <span id="lobbyNet">200</span></div>
                 </div>
             </div>
-            
             <div class="game-panel">
                 <div class="section-title">🏠 加入或创建房间</div>
-                
                 <div class="room-input-group">
                     <input type="text" id="roomIdInput" placeholder="输入房间号" maxlength="6">
                     <button class="btn btn-primary" onclick="joinRoom()" style="width: auto; padding: 12px 20px;">加入</button>
                 </div>
-                
                 <div style="text-align: center; color: #666; margin: 10px 0;">- 或 -</div>
-                
-                <button class="btn btn-success" onclick="createRoom()">创建新房間</button>
+                <button class="btn btn-success" onclick="createRoom()">创建新房间</button>
             </div>
         </div>
         
@@ -613,19 +162,17 @@
                     <span>💰 <span id="gameUserCoins">200</span></span>
                 </div>
                 <div>
-                    <button class="btn-small btn-wage" id="gameWageBtn" onclick="claimWage()" disabled>领工资</button>
+                    <button class="btn-small btn-wage" id="gameWageBtn" onclick="claimWage()">领工资</button>
                     <button class="btn-small btn-loan" onclick="takeLoan()">借贷</button>
                     <button class="btn-small btn-logout" onclick="leaveRoom()">退出房间</button>
                 </div>
             </div>
-            
             <div class="game-panel">
                 <div class="room-info">
                     <span style="color: #888;">房间号: </span>
                     <span class="room-id-display" id="roomIdDisplay">------</span>
-                    <button class="btn-small btn-primary" onclick="copyRoomId()" style="margin-left: 10px;">复制</button>
+                    <button class="btn-small btn-primary" onclick="copyRoomId()">复制</button>
                 </div>
-                
                 <div class="players-area">
                     <div class="player-card" id="playerCard">
                         <div class="player-avatar">🙂</div>
@@ -633,12 +180,10 @@
                         <div class="player-coins" id="playerCoinsDisplay">金币: 200</div>
                         <div class="player-bet" id="playerBetDisplay">投注: 0</div>
                     </div>
-
                     <div class="vs-area">
                         <div class="vs-badge">VS</div>
                         <div class="pot-display" id="potDisplay">💰 0</div>
                     </div>
-
                     <div class="player-card" id="enemyCard">
                         <div class="player-avatar">🤖</div>
                         <div class="player-name" id="enemyNameDisplay">等待对手...</div>
@@ -646,7 +191,6 @@
                         <div class="player-bet" id="enemyBetDisplay">投注: ???</div>
                     </div>
                 </div>
-
                 <div class="betting-area" id="bettingArea">
                     <div class="betting-title">💎 点击按钮累加投注（底注1金币）</div>
                     <div class="bet-buttons">
@@ -659,7 +203,6 @@
                     </div>
                     <div class="bet-info" id="betInfo">当前投注: 0 | 总计: 1（含底注）</div>
                 </div>
-
                 <div class="revolver-section">
                     <div class="cylinder-container">
                         <div class="cylinder" id="cylinder">
@@ -673,12 +216,9 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="message-area" id="messageArea">等待玩家加入...</div>
-
                 <div class="action-area" id="actionArea">
                     <div class="action-title" id="actionTitle">选择你的行动</div>
-                    
                     <div class="bullet-options" id="bulletOptions" style="display: none;">
                         <button class="bullet-option" onclick="selectBullet(1)">1</button>
                         <button class="bullet-option" onclick="selectBullet(2)">2</button>
@@ -686,7 +226,6 @@
                         <button class="bullet-option" onclick="selectBullet(4)">4</button>
                         <button class="bullet-option" onclick="selectBullet(5)">5</button>
                     </div>
-                    
                     <div id="mainButtons">
                         <button class="btn btn-success" onclick="setReady()">✓ 准备（扣除底注）</button>
                     </div>
@@ -696,33 +235,20 @@
     </div>
 
     <script>
-        let ws = null;
-        let currentRoomId = null;
-        let currentPlayerId = null;
-        let isHost = false;
-        let gameState = null;
-        let selectedBulletCount = 1;
-        let currentBet = 0;
-        
-        // 当前登录用户信息
-        let currentUser = {
-            name: '',
-            coins: 200,
-            debt: 0,
-            canClaimWage: false,
-            wageCooldown: '00:00:00'
-        };
+        let ws = null, currentRoomId = null, currentPlayerId = null, isHost = false, gameState = null;
+        let selectedBulletCount = 1, currentBet = 0;
+        let currentUser = { name: '', coins: 200, debt: 0, canClaimWage: false, wageCooldown: '00:00:00' };
 
-        function showError(message) {
+        function showError(msg) {
             const el = document.getElementById('errorMessage');
-            el.textContent = message;
+            el.textContent = msg;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 3000);
         }
 
-        function showSuccess(message) {
+        function showSuccess(msg) {
             const el = document.getElementById('successMessage');
-            el.textContent = message;
+            el.textContent = msg;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 3000);
         }
@@ -730,65 +256,32 @@
         function connectWebSocket(onOpen) {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}`;
-            console.log('Connecting to:', wsUrl);
-            
             ws = new WebSocket(wsUrl);
-            
-            ws.onopen = () => {
-                console.log('WebSocket connected');
-                onOpen();
-            };
-            
-            ws.onmessage = (event) => {
-                console.log('Received:', event.data);
-                const data = JSON.parse(event.data);
-                handleMessage(data);
-            };
-            
-            ws.onerror = (err) => {
-                console.error('WebSocket error:', err);
-                showError('连接失败');
-            };
-            
-            ws.onclose = () => {
-                console.log('WebSocket closed');
-            };
+            ws.onopen = onOpen;
+            ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+            ws.onerror = () => showError('连接失败');
         }
 
         function handleMessage(data) {
+            console.log('Received:', data);
             switch(data.type) {
                 case 'loginSuccess':
-                    currentUser = {
-                        name: data.data.name,
-                        coins: data.data.coins,
-                        debt: data.data.debt,
-                        canClaimWage: data.data.canClaimWage,
-                        wageCooldown: data.data.wageCooldown
-                    };
-                    
-                    if (data.data.isNew) {
-                        showSuccess('注册成功！初始金币200');
-                    } else {
-                        showSuccess('登录成功！');
-                    }
-                    
+                    currentUser = { name: data.data.name, coins: data.data.coins, debt: data.data.debt, canClaimWage: data.data.canClaimWage, wageCooldown: data.data.wageCooldown };
+                    showSuccess(data.data.isNew ? '注册成功！' : '登录成功！');
                     showLobby();
                     break;
-                    
                 case 'roomCreated':
                     currentRoomId = data.data.roomId;
                     currentPlayerId = data.data.playerId;
                     isHost = true;
                     showGameScreen();
                     break;
-                    
                 case 'roomJoined':
                     currentRoomId = data.data.roomId;
                     currentPlayerId = data.data.playerId;
                     isHost = false;
                     showGameScreen();
                     break;
-                    
                 case 'gameState':
                     gameState = data.data;
                     const player = gameState.players.find(p => p.id === currentPlayerId);
@@ -800,11 +293,9 @@
                     }
                     updateGameUI();
                     break;
-                    
                 case 'error':
                     showError(data.data.message);
                     break;
-                    
                 case 'wageClaimed':
                     currentUser.coins = data.data.coins;
                     currentUser.canClaimWage = false;
@@ -812,7 +303,6 @@
                     updateGameUI();
                     alert(data.data.message);
                     break;
-                    
                 case 'loanTaken':
                     currentUser.coins = data.data.coins;
                     currentUser.debt = data.data.debt;
@@ -820,7 +310,6 @@
                     updateGameUI();
                     alert(data.data.message);
                     break;
-                    
                 case 'betPlaced':
                     currentBet = data.data.totalBet;
                     document.getElementById('betInfo').textContent = `当前投注: ${currentBet} | 总计: ${1 + currentBet}（含底注）`;
@@ -828,26 +317,13 @@
             }
         }
 
-        // 登录
         function login() {
             const name = document.getElementById('loginName').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
-            
-            if (!name || !password) {
-                showError('请输入昵称和密码');
-                return;
-            }
-            
-            connectWebSocket(() => {
-                ws.send(JSON.stringify({
-                    type: 'login',
-                    playerName: name,
-                    password: password
-                }));
-            });
+            if (!name || !password) { showError('请输入昵称和密码'); return; }
+            connectWebSocket(() => ws.send(JSON.stringify({ type: 'login', playerName: name, password: password })));
         }
 
-        // 显示大厅
         function showLobby() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('lobbyScreen').style.display = 'block';
@@ -855,45 +331,24 @@
             updateLobbyUI();
         }
 
-        // 更新大厅UI
         function updateLobbyUI() {
             document.getElementById('lobbyUserName').textContent = currentUser.name;
             document.getElementById('totalAssets').textContent = currentUser.coins;
             document.getElementById('lobbyCoins').textContent = currentUser.coins;
             document.getElementById('lobbyDebt').textContent = currentUser.debt;
-            document.getElementById('lobbyNet').textContent = currentUser.coins - Math.floor(currentUser.debt * (13/9));
-            
+            document.getElementById('lobbyNet').textContent = currentUser.coins - Math.floor(currentUser.debt * 1.44);
             const wageBtn = document.getElementById('lobbyWageBtn');
             wageBtn.disabled = !currentUser.canClaimWage;
-            wageBtn.textContent = currentUser.canClaimWage ? '领工资' : `冷却 ${currentUser.wageCooldown}`;
+            wageBtn.textContent = currentUser.canClaimWage ? '领工资' : '领工资';
         }
 
-        // 创建房间
-        function createRoom() {
-            if (!ws) return;
-            ws.send(JSON.stringify({
-                type: 'createRoom',
-                playerName: currentUser.name
-            }));
-        }
-
-        // 加入房间
+        function createRoom() { if (ws) ws.send(JSON.stringify({ type: 'createRoom', playerName: currentUser.name })); }
         function joinRoom() {
             const roomId = document.getElementById('roomIdInput').value.trim().toUpperCase();
-            if (!roomId) {
-                showError('请输入房间号');
-                return;
-            }
-            
-            if (!ws) return;
-            ws.send(JSON.stringify({
-                type: 'joinRoom',
-                roomId: roomId,
-                playerName: currentUser.name
-            }));
+            if (!roomId) { showError('请输入房间号'); return; }
+            if (ws) ws.send(JSON.stringify({ type: 'joinRoom', roomId: roomId, playerName: currentUser.name }));
         }
 
-        // 显示游戏界面
         function showGameScreen() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('lobbyScreen').style.display = 'none';
@@ -903,17 +358,118 @@
             updateGameUI();
         }
 
-        // 更新游戏UI
         function updateGameUI() {
             if (!gameState) return;
-            
             document.getElementById('gameUserCoins').textContent = currentUser.coins;
             document.getElementById('potDisplay').textContent = `💰 ${gameState.pot || 0}`;
-            
-            // 更新玩家信息
             const player = gameState.players.find(p => p.id === currentPlayerId);
             const enemy = gameState.players.find(p => p.id !== currentPlayerId);
-            
             if (player) {
                 document.getElementById('playerNameDisplay').textContent = player.name;
-                document.getElementById('playerCoinsDisplay').text
+                document.getElementById('playerCoinsDisplay').textContent = `金币: ${player.coins}`;
+                document.getElementById('playerBetDisplay').textContent = `投注: ${player.currentBet || 0}`;
+                document.getElementById('playerCard').className = 'player-card' + (player.isCurrent ? ' active' : '') + (player.isAlive ? '' : ' dead');
+            }
+            if (enemy) {
+                document.getElementById('enemyNameDisplay').textContent = enemy.name;
+                document.getElementById('enemyCoinsDisplay').textContent = `金币: ${enemy.coins}`;
+                document.getElementById('enemyBetDisplay').textContent = `投注: ${enemy.currentBet || 0}`;
+                document.getElementById('enemyCard').className = 'player-card' + (enemy.isCurrent ? ' active' : '') + (enemy.isAlive ? '' : ' dead');
+            } else {
+                document.getElementById('enemyNameDisplay').textContent = '等待对手...';
+            }
+            document.getElementById('messageArea').textContent = gameState.message;
+            updateActionButtons();
+        }
+
+        function updateActionButtons() {
+            const buttonsDiv = document.getElementById('mainButtons');
+            const bulletOptions = document.getElementById('bulletOptions');
+            switch(gameState.phase) {
+                case 'waiting':
+                case 'betting':
+                    bulletOptions.style.display = 'none';
+                    buttonsDiv.innerHTML = '<button class="btn btn-success" onclick="setReady()">✓ 准备（扣除底注）</button>';
+                    break;
+                case 'ready':
+                    if (isHost) {
+                        bulletOptions.style.display = 'flex';
+                        buttonsDiv.innerHTML = `<button class="btn btn-primary" onclick="startGame()">开始游戏 (${selectedBulletCount}发子弹)</button>`;
+                    } else {
+                        bulletOptions.style.display = 'none';
+                        buttonsDiv.innerHTML = '<button class="btn" disabled>等待房主开始...</button>';
+                    }
+                    break;
+                case 'playing':
+                    bulletOptions.style.display = 'none';
+                    const player = gameState.players.find(p => p.id === currentPlayerId);
+                    if (player?.isCurrent && player?.isAlive) buttonsDiv.innerHTML = '<button class="btn btn-danger" onclick="fire()">🔫 扣动扳机</button>';
+                    else if (!player?.isAlive) buttonsDiv.innerHTML = '<button class="btn" disabled>你已死亡</button>';
+                    else buttonsDiv.innerHTML = '<button class="btn" disabled>等待...</button>';
+                    break;
+                case 'ended':
+                    bulletOptions.style.display = 'none';
+                    const winner = gameState.players.find(p => p.isAlive);
+                    const isWinner = winner && winner.id === currentPlayerId;
+                    if (isWinner) buttonsDiv.innerHTML = '<button class="btn btn-primary" onclick="nextGame()">🏆 开始下一局</button>';
+                    else buttonsDiv.innerHTML = '<button class="btn" disabled>等待赢家...</button>';
+                    break;
+            }
+        }
+
+        function selectBullet(count) {
+            selectedBulletCount = count;
+            document.querySelectorAll('.bullet-option').forEach((btn, idx) => btn.classList.toggle('selected', idx + 1 === count));
+            updateActionButtons();
+        }
+
+        function placeBet(amount) { if (ws) ws.send(JSON.stringify({ type: 'placeBet', amount: amount })); }
+        function setReady() { if (ws) ws.send(JSON.stringify({ type: 'ready' })); }
+        function startGame() { if (ws) ws.send(JSON.stringify({ type: 'startGame', bulletCount: selectedBulletCount })); }
+        function fire() {
+            if (!ws) return;
+            document.getElementById('cylinder').classList.add('spinning');
+            setTimeout(() => { document.getElementById('cylinder').classList.remove('spinning'); ws.send(JSON.stringify({ type: 'fire' })); }, 500);
+        }
+        function nextGame() { if (ws) ws.send(JSON.stringify({ type: 'nextGame' })); }
+        function claimWage() { if (ws) ws.send(JSON.stringify({ type: 'claimWage' })); }
+        function takeLoan() { if (ws && confirm('确定要借贷吗？\n借900金币，需还1300金币')) ws.send(JSON.stringify({ type: 'takeLoan' })); }
+        function copyRoomId() {
+            const roomId = document.getElementById('roomIdDisplay').textContent;
+            if (roomId === '------') { alert('房间号未生成'); return; }
+            const input = document.createElement('input');
+            input.value = roomId;
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            alert('房间号已复制: ' + roomId);
+        }
+        function leaveRoom() {
+            if (confirm('确定要退出房间吗？')) {
+                if (ws) ws.close();
+                currentRoomId = null;
+                currentPlayerId = null;
+                isHost = false;
+                gameState = null;
+                currentBet = 0;
+                document.getElementById('gameScreen').style.display = 'none';
+                document.getElementById('lobbyScreen').style.display = 'block';
+                document.getElementById('roomIdDisplay').textContent = '------';
+            }
+        }
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                if (ws) ws.close();
+                currentUser = { name: '', coins: 200, debt: 0, canClaimWage: false, wageCooldown: '00:00:00' };
+                document.getElementById('lobbyScreen').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'block';
+            }
+        }
+
+        selectBullet(1);
+    </script>
+</body>
+</html>
