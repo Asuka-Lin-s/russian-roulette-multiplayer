@@ -460,7 +460,7 @@
                 <div class="players-area">
                     <div class="player-card" id="playerCard">
                         <div class="player-avatar">🙂</div>
-                        <div class="player-name">你</div>
+                        <div class="player-name" id="playerNameDisplay">你</div>
                         <div class="player-coins" id="playerBetCoins">金币: 200</div>
                         <div class="player-bet" id="playerCurrentBet">投注: 0</div>
                     </div>
@@ -472,7 +472,7 @@
 
                     <div class="player-card" id="enemyCard">
                         <div class="player-avatar">🤖</div>
-                        <div class="player-name">对手</div>
+                        <div class="player-name" id="enemyNameDisplay">等待对手...</div>
                         <div class="player-coins" id="enemyBetCoins">金币: ???</div>
                         <div class="player-bet" id="enemyCurrentBet">投注: ???</div>
                     </div>
@@ -741,6 +741,7 @@
             const enemy = gameState.players.find(p => p.id !== currentPlayerId);
             
             if (player) {
+                document.getElementById('playerNameDisplay').textContent = player.name;
                 document.getElementById('playerBetCoins').textContent = `金币: ${player.coins}`;
                 document.getElementById('playerCurrentBet').textContent = `投注: ${player.currentBet || 0}`;
                 document.getElementById('playerCard').classList.toggle('active', player.isCurrent);
@@ -748,10 +749,15 @@
             }
             
             if (enemy) {
+                document.getElementById('enemyNameDisplay').textContent = enemy.name;
                 document.getElementById('enemyBetCoins').textContent = `金币: ${enemy.coins}`;
                 document.getElementById('enemyCurrentBet').textContent = `投注: ${enemy.currentBet || 0}`;
                 document.getElementById('enemyCard').classList.toggle('active', enemy.isCurrent);
                 document.getElementById('enemyCard').classList.toggle('dead', !enemy.isAlive);
+            } else {
+                document.getElementById('enemyNameDisplay').textContent = '等待对手...';
+                document.getElementById('enemyBetCoins').textContent = '金币: ???';
+                document.getElementById('enemyCurrentBet').textContent = '投注: ???';
             }
         }
 
