@@ -117,9 +117,9 @@
             </div>
             <div class="input-group">
                 <label>密码</label>
-                <input type="password" id="loginPassword" placeholder="输入密码" maxlength="20">
+                <input type="password" id="loginPassword" placeholder="输入密码" maxlength="20" onkeypress="if(event.key==='Enter')login()">
             </div>
-            <button class="btn btn-primary" onclick="login()">登录 / 注册</button>
+            <button class="btn btn-primary" onclick="login()" id="loginBtn">登录 / 注册</button>
         </div>
         
         <!-- 大厅界面 -->
@@ -320,8 +320,28 @@
         function login() {
             const name = document.getElementById('loginName').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
+            const btn = document.getElementById('loginBtn');
+            
             if (!name || !password) { showError('请输入昵称和密码'); return; }
-            connectWebSocket(() => ws.send(JSON.stringify({ type: 'login', playerName: name, password: password })));
+            
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+            
+            // 如果已有连接，先关闭
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            connectWebSocket(() => {
+                ws.send(JSON.stringify({ type: 'login', playerName: name, password: password }));
+            });
+            
+            // 3秒后恢复按钮（防止卡住）
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = '登录 / 注册';
+            }, 3000);
         }
 
         function showLobby() {
