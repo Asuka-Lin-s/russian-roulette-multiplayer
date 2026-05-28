@@ -313,8 +313,7 @@ wss.on('connection', (ws) => {
                     // 累加投注
                     player.currentBet = playerCurrentBet + betAmount;
                     betRoom.game.currentBet += betAmount;
-                        betRoom.game.pot += betAmount;
-                    }
+                    betRoom.game.pot += betAmount;
                     
                     betRoom.game.phase = 'betting';
                     betRoom.game.message = `投注中... 当前奖池: ${betRoom.game.pot}金币`;
