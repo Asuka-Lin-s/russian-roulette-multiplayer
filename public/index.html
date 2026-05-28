@@ -449,7 +449,10 @@
         }
         function leaveRoom() {
             if (confirm('确定要退出房间吗？')) {
-                if (ws) ws.close();
+                if (ws) {
+                    ws.close();
+                    ws = null;
+                }
                 currentRoomId = null;
                 currentPlayerId = null;
                 isHost = false;
@@ -458,6 +461,8 @@
                 document.getElementById('gameScreen').style.display = 'none';
                 document.getElementById('lobbyScreen').style.display = 'block';
                 document.getElementById('roomIdDisplay').textContent = '------';
+                // 重新连接WebSocket以便后续操作
+                setTimeout(() => connectWebSocket(() => {}), 100);
             }
         }
         function logout() {
