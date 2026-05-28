@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄罗斯轮盘 - 单人试玩版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .game-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        /* 子弹选择 */
+        .bullet-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .bullet-selector-title {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .bullet-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .bullet-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #444;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bullet-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            transform: scale(1.1);
+        }
+
+        .bullet-option.selected {
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.3);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .bullet-info {
+            font-size: 1rem;
+            color: #ff6b6b;
+            min-height: 24px;
+        }
+
+        /* 转轮 */
+        .revolver-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .revolver {
+            width: 250px;
+            height: 250px;
+            position: relative;
+        }
+
+        .cylinder {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+            border: 5px solid #444;
+            position: relative;
+            margin: 15px auto;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.5s ease;
+        }
+
+        .cylinder.spinning {
+            animation: spin 0.3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .chamber {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #111;
+            border: 3px solid #555;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .chamber.active {
+            box-shadow: 0 0 20px #4ecdc4, inset 0 0 15px rgba(78, 205, 196, 0.3);
+            border-color: #4ecdc4;
+        }
+
+        .chamber.fired {
+            background: #333;
+            border-color: #666;
+        }
+
+        .chamber.bullet {
+            background: #ff0000;
+            border-color: #ff4444;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .chamber.bullet.revealed::after {
+            content: '💀';
+        }
+
+        .chamber:nth-child(1) { top: 10px; left: 50%; transform: translateX(-50%); }
+        .chamber:nth-child(2) { top: 45px; right: 20px; }
+        .chamber:nth-child(3) { bottom: 45px; right: 20px; }
+        .chamber:nth-child(4) { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .chamber:nth-child(5) { bottom: 45px; left: 20px; }
+        .chamber:nth-child(6) { top: 45px; left: 20px; }
+
+        .center-pin {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(145deg, #666, #444);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 统计 */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* 消息区 */
+        .message-area {
+            min-height: 80px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-area.danger {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            color: #ff6b6b;
+            animation: shake 0.5s ease;
+        }
+
+        .message-area.success {
+            background: rgba(78, 205, 196, 0.2);
+            border: 2px solid rgba(78, 205, 196, 0.5);
+            color: #4ecdc4;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* 按钮 */
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-danger {
+            background: linear-gradient(145deg, #ff0000, #cc0000);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.5);
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+        }
+
+        /* 历史记录 */
+        .history-panel {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item.survived {
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .history-item.dead {
+            border-left: 4px solid #ff0000;
+        }
+
+        .history-round {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .history-result {
+            font-weight: bold;
+        }
+
+        .history-result.survived {
+            color: #4ecdc4;
+        }
+
+        .history-result.dead {
+            color: #ff6b6b;
+        }
+
+        /* 闪烁效果 */
+        .flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .flash.active {
+            animation: flash 0.3s ease;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        /* 游戏结束遮罩 */
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .game-over.show {
+            display: flex;
+        }
+
+        .game-over-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            margin-bottom: 30px;
+            animation: pulse 1s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .game-over-stats {
+            color: #888;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flash" id="flash"></div>
+    
+    <div class="game-over" id="gameOver">
+        <div class="game-over-text">💀 你死了！</div>
+        <div class="game-over-stats" id="gameOverStats"></div>
+        <button class="btn btn-primary" onclick="restartGame()">再玩一次</button>
+    </div>
+
+    <div class="container">
+        <h1>🔫 俄罗斯轮盘</h1>
+        <p class="subtitle">单人试玩版 - 你能活多久？</p>
+
+        <div class="game-panel">
+            <div class="bullet-selector">
+                <div class="bullet-selector-title">🎯 选择子弹数量（1-5发）</div>
+                <div class="bullet-options" id="bulletOptions"></div>
+                <div class="bullet-info" id="bulletInfo">选择子弹数量开始游戏</div>
+            </div>
+        </div>
+
+        <div class="game-panel">
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="roundCount">0</div>
+                    <div class="stat-label">轮次</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="survivalCount">0</div>
+                    <div class="stat-label">存活</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="deathProb">0%</div>
+                    <div class="stat-label">死亡概率</div>
+                </div>
+            </div>
+
+            <div class="revolver-container">
+                <div class="revolver">
+                    <div class="cylinder" id="cylinder">
+                        <div class="chamber" id="chamber-0"></div>
+                        <div class="chamber" id="chamber-1"></div>
+                        <div class="chamber" id="chamber-2"></div>
+                        <div class="chamber" id="chamber-3"></div>
+                        <div class="chamber" id="chamber-4"></div>
+                        <div class="chamber" id="chamber-5"></div>
+                        <div class="center-pin"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-area" id="messageArea">选择子弹数量，点击"开始游戏"</div>
+
+            <div class="action-buttons">
+                <button class="btn btn-success" id="startBtn" onclick="startGame()">开始游戏</button>
+                <button class="btn btn-danger" id="fireBtn" onclick="fire()" disabled>扣动扳机</button>
+                <button class="btn btn-primary" id="resetBtn" onclick="resetGame()" disabled>重新装弹</button>
+            </div>
+        </div>
+
+        <div class="game-panel">
+            <h3 style="margin-bottom: 15px; color: #888;">📜 历史记录</h3>
+            <div class="history-panel" id="historyPanel">
+                <div style="text-align: center; color: #666; padding: 20px;">暂无记录</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let gameState = {
+            phase: 'idle', // idle, ready, playing, ended
+            bulletCount: 1,
+            chambers: [false, false, false, false, false, false],
+            bulletPositions: [],
+            currentChamber: 0,
+            rounds: 0,
+            survivalCount: 0,
+            history: []
+        };
+
+        // 初始化
+        function init() {
+            renderBulletOptions();
+            updateUI();
+        }
+
+        // 渲染子弹选择
+        function renderBulletOptions() {
+            const container = document.getElementById('bulletOptions');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'bullet-option' + (i === gameState.bulletCount ? ' selected' : '');
+                btn.textContent = i;
+                btn.onclick = () => selectBulletCount(i);
+                container.appendChild(btn);
+            }
+            updateBulletInfo();
+        }
+
+        // 选择子弹数量
+        function selectBulletCount(count) {
+            if (gameState.phase === 'playing') return;
+            gameState.bulletCount = count;
+            renderBulletOptions();
+        }
+
+        // 更新子弹信息
+        function updateBulletInfo() {
+            const info = document.getElementById('bulletInfo');
+            const prob = (gameState.bulletCount / 6 * 100).toFixed(1);
+            info.textContent = `${gameState.bulletCount}发子弹 = ${prob}% 死亡概率`;
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState.phase = 'playing';
+            gameState.rounds = 0;
+            gameState.survivalCount = 0;
+            gameState.history = [];
+            
+            loadBullets();
+            updateUI();
+            updateMessage('游戏开始！点击"扣动扳机"', 'success');
+        }
+
+        // 装填子弹
+        function loadBullets() {
+            gameState.chambers = [false, false, false, false, false, false];
+            gameState.bulletPositions = [];
+            gameState.currentChamber = 0;
+            
+            // 随机位置
+            const positions = [0, 1, 2, 3, 4, 5];
+            for (let i = positions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [positions[i], positions[j]] = [positions[j], positions[i]];
+            }
+            
+            // 填充子弹
+            for (let i = 0; i < gameState.bulletCount; i++) {
+                gameState.chambers[positions[i]] = true;
+                gameState.bulletPositions.push(positions[i]);
+            }
+            
+            // 随机旋转转轮（随机起始位置）
+            gameState.currentChamber = Math.floor(Math.random() * 6);
+            
+            updateCylinderUI();
+        }
+
+        // 扣动扳机
+        function fire() {
+            if (gameState.phase !== 'playing') return;
+            
+            const chamberIndex = gameState.currentChamber;
+            const hasBullet = gameState.chambers[chamberIndex];
+            
+            gameState.rounds++;
+            
+            // 动画效果
+            const cylinder = document.getElementById('cylinder');
+            cylinder.classList.add('spinning');
+            
+            setTimeout(() => {
+                cylinder.classList.remove('spinning');
+                
+                if (hasBullet) {
+                    // 中弹死亡
+                    gameState.history.unshift({
+                        round: gameState.rounds,
+                        result: 'dead',
+                        chamber: chamberIndex + 1
+                    });
+                    
+                    // 显示子弹
+                    document.getElementById(`chamber-${chamberIndex}`).classList.add('bullet', 'revealed');
+                    
+                    // 闪烁效果
+                    document.getElementById('flash').classList.add('active');
+                    setTimeout(() => document.getElementById('flash').classList.remove('active'), 300);
+                    
+                    updateMessage(`💥 砰！你死了！（第${chamberIndex + 1}发有子弹）`, 'danger');
+                    gameState.phase = 'ended';
+                    showGameOver();
+                } else {
+                    // 存活
+                    gameState.survivalCount++;
+                    gameState.history.unshift({
+                        round: gameState.rounds,
+                        result: 'survived',
+                        chamber: chamberIndex + 1
+                    });
+                    
+                    document.getElementById(`chamber-${chamberIndex}`).classList.add('fired');
+                    
+                    const remaining = 6 - gameState.currentChamber - 1;
+                    const bulletsRemaining = gameState.bulletPositions.filter(pos => pos > chamberIndex).length;
+                    
+                    if (remaining <= 0) {
+                        updateMessage(`🔘 奇迹生还！6发全空！重新装弹...`, 'success');
+                        setTimeout(() => {
+                            loadBullets();
+                            updateMessage('重新装弹完成！继续游戏', 'success');
+                        }, 1500);
+                    } else {
+                        const prob = (bulletsRemaining / remaining * 100).toFixed(1);
+                        updateMessage(`🔘 咔！你活下来了！剩余${remaining}发，死亡概率${prob}%`, 'success');
+                    }
+                    
+                    gameState.currentChamber++;
+                }
+                
+                updateUI();
+            }, 500);
+        }
+
+        // 重新装弹
+        function resetGame() {
+            loadBullets();
+            updateMessage('重新装弹完成！继续游戏', 'success');
+            updateUI();
+        }
+
+        // 重新开始
+        function restartGame() {
+            document.getElementById('gameOver').classList.remove('show');
+            gameState.phase = 'idle';
+            gameState.rounds = 0;
+            gameState.survivalCount = 0;
+            gameState.history = [];
+            
+            // 清除所有弹仓状态
+            for (let i = 0; i < 6; i++) {
+                const chamber = document.getElementById(`chamber-${i}`);
+                chamber.className = 'chamber';
+            }
+            
+            updateMessage('选择子弹数量，点击"开始游戏"');
+            updateUI();
+        }
+
+        // 显示游戏结束
+        function showGameOver() {
+            const stats = document.getElementById('gameOverStats');
+            stats.textContent = `存活 ${gameState.survivalCount} 轮 | 共 ${gameState.rounds} 轮`;
+            document.getElementById('gameOver').classList.add('show');
+        }
+
+        // 更新转轮UI
+        function updateCylinderUI() {
+            for (let i = 0; i < 6; i++) {
+                const chamber = document.getElementById(`chamber-${i}`);
+                chamber.className = 'chamber';
+                
+                if (i === gameState.currentChamber && gameState.phase === 'playing') {
+                    chamber.classList.add('active');
+                }
+                
+                // 游戏结束后显示所有子弹位置
+                if (gameState.phase === 'ended' && gameState.chambers[i]) {
+                    chamber.classList.add('bullet', 'revealed');
+                }
+            }
+        }
+
+        // 更新消息
+        function updateMessage(text, type = '') {
+            const msgArea = document.getElementById('messageArea');
+            msgArea.textContent = text;
+            msgArea.className = 'message-area' + (type ? ' ' + type : '');
+        }
+
+        // 更新UI
+        function updateUI() {
+            // 统计
+            document.getElementById('roundCount').textContent = gameState.rounds;
+            document.getElementById('survivalCount').textContent = gameState.survivalCount;
+            const remaining = 6 - gameState.currentChamber;
+            const bulletsRemaining = gameState.bulletPositions.filter(pos => pos >= gameState.currentChamber).length;
+            const prob = remaining > 0 ? (bulletsRemaining / remaining * 100).toFixed(1) : 0;
+            document.getElementById('deathProb').textContent = prob + '%';
+            
+            // 按钮状态
+            document.getElementById('startBtn').disabled = gameState.phase === 'playing';
+            document.getElementById('fireBtn').disabled = gameState.phase !== 'playing';
+            document.getElementById('resetBtn').disabled = gameState.phase !== 'playing';
+            
+            // 转轮
+            updateCylinderUI();
+            
+            // 历史记录
+            updateHistory();
+            
+            // 子弹选择
+            const bulletOptions = document.querySelectorAll('.bullet-option');
+            bulletOptions.forEach(opt => {
+                opt.style.pointerEvents = gameState.phase === 'playing' ? 'none' : 'auto';
+                opt.style.opacity = gameState.phase === 'playing' ? '0.5' : '1';
+            });
+        }
+
+        // 更新历史记录
+        function updateHistory() {
+            const panel = document.getElementById('historyPanel');
+            
+            if (gameState.history.length === 0) {
+                panel.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">暂无记录</div>';
+                return;
+            }
+            
+            panel.innerHTML = gameState.history.map(h => `
+                <div class="history-item ${h.result}">
+                    <span class="history-round">第${h.round}轮 - 第${h.chamber}发</span>
+                    <span class="history-result ${h.result}">${h.result === 'survived' ? '✓ 存活' : '💀 死亡'}</span>
+                </div>
+            `).join('');
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>

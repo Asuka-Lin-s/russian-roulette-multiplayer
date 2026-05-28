@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄罗斯轮盘 - 赌场版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+
+        /* 顶部状态栏 */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .player-info .label {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .player-info .value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .player-info .value.debt {
+            color: #ff6b6b;
+        }
+
+        .wage-timer {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .wage-timer.ready {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-wage {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .btn-wage:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-loan {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: white;
+        }
+
+        .game-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        /* 设置面板 */
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .setup-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .setup-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .setup-section h3 {
+            color: #888;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        /* 子弹选择 */
+        .bullet-options {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .bullet-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #444;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bullet-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .bullet-option.selected {
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.3);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .bullet-info {
+            font-size: 0.85rem;
+            color: #ff6b6b;
+            text-align: center;
+        }
+
+        /* 投注输入 */
+        .bet-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .bet-input-group input {
+            width: 120px;
+            padding: 10px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .bet-input-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .bet-info {
+            font-size: 0.85rem;
+            color: #888;
+            text-align: center;
+        }
+
+        .bet-info.error {
+            color: #ff6b6b;
+        }
+
+        /* 特殊子弹说明 */
+        .special-bullets-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .special-bullets-info h4 {
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .special-bullet-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .special-bullet-icon {
+            font-size: 1.2rem;
+        }
+
+        /* 玩家区域 */
+        .players-area {
+            display: grid;
+            grid-template-columns: 1fr 180px 1fr;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .players-area {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .player-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .player-card.active {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 30px rgba(78, 205, 196, 0.3);
+        }
+
+        .player-card.dead {
+            border-color: #ff0000;
+            opacity: 0.6;
+        }
+
+        .player-card.dead .player-name {
+            text-decoration: line-through;
+            color: #ff6b6b;
+        }
+
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+
+        .player-avatar.clown::after {
+            content: '🤡';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .player-avatar.alien::after {
+            content: '👽';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            font-size: 1rem;
+            animation: alien-glow 1s ease infinite;
+        }
+
+        @keyframes alien-glow {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+
+        .player-card.active .player-avatar {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .player-card.dead .player-avatar {
+            background: #444;
+            filter: grayscale(100%);
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .player-coins {
+            font-size: 0.9rem;
+            color: #ffd700;
+        }
+
+        .player-status {
+            font-size: 0.8rem;
+            color: #888;
+            min-height: 18px;
+            margin-top: 5px;
+        }
+
+        .player-status.turn {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        /* VS 区域 */
+        .vs-area {
+            text-align: center;
+        }
+
+        .vs-badge {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .pot-display {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        /* 转轮 */
+        .revolver-section {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .cylinder-container {
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+
+        .cylinder {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+            border: 4px solid #444;
+            position: relative;
+            margin: 10px auto;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.5s ease;
+        }
+
+        .cylinder.spinning {
+            animation: spin 0.3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .chamber {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #111;
+            border: 2px solid #555;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .chamber.current {
+            box-shadow: 0 0 15px #ff0000, inset 0 0 10px rgba(255, 0, 0, 0.3);
+            border-color: #ff0000;
+            animation: blink 0.5s ease infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .chamber.fired {
+            background: #333;
+            border-color: #666;
+        }
+
+        .chamber.bullet {
+            background: #ff0000;
+            border-color: #ff4444;
+        }
+
+        .chamber.bullet.special-clown {
+            background: linear-gradient(145deg, #ff6b6b, #ffd93d);
+            border-color: #ff6b6b;
+        }
+
+        .chamber.bullet.special-alien {
+            background: linear-gradient(145deg, #00ff00, #00aa00);
+            border-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .chamber.bullet.revealed::after {
+            content: '💀';
+            font-size: 0.7rem;
+        }
+
+        .chamber.bullet.special-clown.revealed::after {
+            content: '🤡';
+        }
+
+        .chamber.bullet.special-alien.revealed::after {
+            content: '👽';
+        }
+
+        .chamber:nth-child(1) { top: 6px; left: 50%; transform: translateX(-50%); }
+        .chamber:nth-child(2) { top: 30px; right: 12px; }
+        .chamber:nth-child(3) { bottom: 30px; right: 12px; }
+        .chamber:nth-child(4) { bottom: 6px; left: 50%; transform: translateX(-50%); }
+        .chamber:nth-child(5) { bottom: 30px; left: 12px; }
+        .chamber:nth-child(6) { top: 30px; left: 12px; }
+
+        .center-pin {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(145deg, #666, #444);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .cylinder-info {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        /* 消息区 */
+        .message-area {
+            min-height: 50px;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid transparent;
+        }
+
+        .message-area.danger {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: rgba(255, 0, 0, 0.5);
+            color: #ff6b6b;
+            animation: shake 0.5s ease;
+        }
+
+        .message-area.success {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: rgba(78, 205, 196, 0.5);
+            color: #4ecdc4;
+        }
+
+        .message-area.warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: rgba(255, 193, 7, 0.5);
+            color: #ffc107;
+        }
+
+        .message-area.special {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* 操作按钮 */
+        .action-area {
+            text-align: center;
+        }
+
+        .action-title {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-self {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-self:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-enemy {
+            background: linear-gradient(145deg, #ff0000, #cc0000);
+            color: white;
+        }
+
+        .btn-enemy:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.5);
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 40px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 借贷弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid #444;
+        }
+
+        .modal h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        .modal-content {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-content p {
+            margin-bottom: 10px;
+            color: #aaa;
+        }
+
+        .modal-content .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .modal-content .warning {
+            color: #ff6b6b;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* 闪烁效果 */
+        .flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .flash.active {
+            animation: flash 0.3s ease;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        /* 游戏结束 */
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .game-over.show {
+            display: flex;
+        }
+
+        .game-over-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: pulse 1s ease infinite;
+        }
+
+        .game-over-text.win {
+            color: #4ecdc4;
+            text-shadow: 0 0 30px rgba(78, 205, 196, 0.8);
+        }
+
+        .game-over-text.lose {
+            color: #ff0000;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+        }
+
+        .game-over-text.broke {
+            color: #888;
+            text-shadow: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .game-over-reason {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        /* 聊天区 */
+        .chat-section {
+            margin-top: 15px;
+        }
+
+        .chat-messages {
+            height: 120px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chat-message {
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .chat-message .sender {
+            font-weight: bold;
+        }
+
+        .chat-message .sender.player {
+            color: #4ecdc4;
+        }
+
+        .chat-message .sender.enemy {
+            color: #ff6b6b;
+        }
+
+        .chat-message .sender.system {
+            color: #888;
+        }
+
+        .chat-message.alien {
+            filter: blur(2px);
+            font-family: monospace;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+
+        .chat-input-group input:disabled {
+            opacity: 0.5;
+        }
+
+        .chat-input-group button {
+            padding: 8px 15px;
+            background: #667eea;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .chat-input-group button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="flash" id="flash"></div>
+    
+    <!-- 借贷弹窗 -->
+    <div class="modal-overlay" id="loanModal">
+        <div class="modal">
+            <h3>🏦 借贷服务</h3>
+            <div class="modal-content">
+                <p>你的金币已归零！</p>
+                <p>借贷规则：<span class="highlight">9出13归</span></p>
+                <p>• 借 <span class="highlight">900</span> 金币，需还 <span class="highlight">1300</span></p>
+                <p>• 每次胜利扣除 <span class="highlight">35%</span> 作为还款</p>
+                <p class="warning">当前借贷总额: <span id="loanAmount">0</span> / 10000 上限</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="takeLoan()">借贷 900</button>
+                <button class="btn" onclick="closeLoanModal()" style="background: #444; color: #fff;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 破产弹窗 -->
+    <div class="modal-overlay" id="brokeModal">
+        <div class="modal">
+            <h3>💀 破产</h3>
+            <div class="modal-content">
+                <p>你的借贷已达到上限 (10000) 且金币归零！</p>
+                <p>你无法继续游戏。</p>
+                <p class="warning">每24小时可领取200金币工资</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-wage" id="wageBtn2" onclick="claimWage()">领取工资</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束 -->
+    <div class="game-over" id="gameOver">
+        <div class="game-over-text" id="gameOverText"></div>
+        <div class="game-over-reason" id="gameOverReason"></div>
+        <button class="btn btn-primary" onclick="backToLobby()">返回大厅</button>
+    </div>
+
+    <div class="container">
+        <h1>🔫 俄罗斯轮盘 · 赌场版</h1>
+        <p class="subtitle">高风险高回报，你准备好了吗？</p>
+
+        <!-- 顶部状态栏 -->
+        <div class="top-bar">
+            <div class="player-info">
+                <span class="label">💰 金币:</span>
+                <span class="value" id="playerCoins">200</span>
+            </div>
+            <div class="player-info">
+                <span class="label">💸 借贷:</span>
+                <span class="value debt" id="playerDebt">0</span>
+            </div>
+            <div class="player-info">
+                <span class="label">📊 净资产:</span>
+                <span class="value" id="playerNet">200</span>
+            </div>
+            <div class="wage-timer" id="wageTimer">
+                工资冷却: --:--:--
+            </div>
+            <button class="btn-small btn-wage" id="wageBtn" onclick="claimWage()" disabled>领取工资</button>
+        </div>
+
+        <!-- 设置面板 -->
+        <div class="game-panel" id="setupPanel">
+            <div class="setup-grid">
+                <div class="setup-section">
+                    <h3>🎯 子弹数量</h3>
+                    <div class="bullet-options" id="bulletOptions"></div>
+                    <div class="bullet-info" id="bulletInfo">选择子弹数量</div>
+                    
+                    <div class="special-bullets-info">
+                        <h4>🎭 特殊子弹 (随机出现)</h4>
+                        <div class="special-bullet-item">
+                            <span class="special-bullet-icon">🤡</span>
+                            <span><strong>小丑弹</strong> - 命中者下局头像变小丑</span>
+                        </div>
+                        <div class="special-bullet-item">
+                            <span class="special-bullet-icon">👽</span>
+                            <span><strong>外星弹</strong> - 命中者下局聊天变乱码</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setup-section">
+                    <h3>💎 投注金额</h3>
+                    <div class="bet-input-group">
+                        <input type="number" id="betAmount" value="10" min="1" max="200" step="10">
+                        <button class="btn-small btn-primary" onclick="setMaxBet()">最大</button>
+                    </div>
+                    <div class="bet-info" id="betInfo">最小投注: 10 | 你的金币: 200</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" id="startBtn" onclick="startGame()">开始游戏</button>
+            </div>
+        </div>
+
+        <!-- 游戏面板 -->
+        <div class="game-panel" id="gamePanel" style="display: none;">
+            <!-- 玩家区域 -->
+            <div class="players-area">
+                <div class="player-card" id="playerCard">
+                    <div class="player-avatar" id="playerAvatar">🙂</div>
+                    <div class="player-name">你</div>
+                    <div class="player-coins" id="playerBetCoins">投注: 0</div>
+                    <div class="player-status" id="playerStatus">等待开始...</div>
+                </div>
+
+                <div class="vs-area">
+                    <div class="vs-badge">VS</div>
+                    <div class="pot-display" id="potDisplay">💰 0</div>
+                </div>
+
+                <div class="player-card" id="enemyCard">
+                    <div class="player-avatar" id="enemyAvatar">🤖</div>
+                    <div class="player-name">电脑</div>
+                    <div class="player-coins" id="enemyBetCoins">投注: 0</div>
+                    <div class="player-status" id="enemyStatus">等待开始...</div>
+                </div>
+            </div>
+
+            <!-- 转轮 -->
+            <div class="revolver-section">
+                <div class="cylinder-container">
+                    <div class="cylinder" id="cylinder">
+                        <div class="chamber" id="chamber-0"></div>
+                        <div class="chamber" id="chamber-1"></div>
+                        <div class="chamber" id="chamber-2"></div>
+                        <div class="chamber" id="chamber-3"></div>
+                        <div class="chamber" id="chamber-4"></div>
+                        <div class="chamber" id="chamber-5"></div>
+                        <div class="center-pin"></div>
+                    </div>
+                </div>
+                <div class="cylinder-info">
+                    弹仓: <span id="currentChamber">1</span>/6 | 
+                    剩余子弹: <span id="bulletsRemaining">?</span> | 
+                    特殊: <span id="specialInfo">?</span>
+                </div>
+            </div>
+
+            <!-- 消息区 -->
+            <div class="message
