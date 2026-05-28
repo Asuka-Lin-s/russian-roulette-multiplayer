@@ -318,8 +318,9 @@ wss.on('connection', (ws) => {
                             // 游戏结束
                             fireRoom.game.phase = 'ended';
                             const winner = alivePlayers[0];
+                            fireRoom.lastWinner = winner; // 记录赢家
                             fireRoom.game.message = winner 
-                                ? `💥 ${currentGamePlayer.name} 死了！${winner.name} 获胜！` 
+                                ? `💥 ${currentGamePlayer.name} 死了！${winner.name} 获胜！点击"下一局"开始新游戏` 
                                 : `💥 ${currentGamePlayer.name} 死了！同归于尽！`;
                         } else {
                             // 继续游戏，跳过死亡玩家
@@ -415,6 +416,38 @@ wss.on('connection', (ws) => {
                     
                     broadcastRoom(currentRoom);
                     console.log(`房间 ${currentRoom} 游戏重置`);
+                    break;
+
+                case 'nextGame':
+                    // 开始下一局（赢家成为新房主并设置子弹）
+                    if (!currentRoom || !currentPlayer) return;
+                    const nextRoom = rooms.get(currentRoom);
+                    if (!nextRoom) return;
+                    
+                    // 检查是否是上一局的赢家
+                    const lastWinner = nextRoom.lastWinner;
+                    if (lastWinner && lastWinner.id !== currentPlayer) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '只有赢家可以开始下一局' }
+                        }));
+                        return;
+                    }
+                    
+                    // 赢家成为房主
+                    nextRoom.players.forEach(p => {
+                        p.isHost = (p.id === currentPlayer);
+                        p.isAlive = true;
+                        p.isReady = false;
+                    });
+                    
+                    nextRoom.game = createGameState();
+                    nextRoom.game.players = nextRoom.players;
+                    nextRoom.game.phase = 'ready'; // 直接进入准备阶段，让赢家设置子弹
+                    nextRoom.game.message = `${lastWinner?.name || '赢家'}请设置子弹数量`;
+                    
+                    broadcastRoom(currentRoom);
+                    console.log(`房间 ${currentRoom} 开始下一局，赢家 ${lastWinner?.name} 设置子弹`);
                     break;
 
                 case 'chat':
