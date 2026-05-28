@@ -256,12 +256,25 @@ wss.on('connection', (ws) => {
                     const betRoom = rooms.get(currentRoom);
                     if (!betRoom) return;
                     
-                    if (betRoom.game.phase !== 'waiting' && betRoom.game.phase !== 'betting') {
+                    // 允许在 waiting、betting、playing 阶段加注
+                    if (!['waiting', 'betting', 'playing'].includes(betRoom.game.phase)) {
                         ws.send(JSON.stringify({
                             type: 'error',
                             data: { message: '当前不能投注' }
                         }));
                         return;
+                    }
+                    
+                    // 游戏过程中只能存活玩家加注
+                    if (betRoom.game.phase === 'playing') {
+                        const bettingPlayer = betRoom.players.find(p => p.id === currentPlayer);
+                        if (!bettingPlayer || !bettingPlayer.isAlive) {
+                            ws.send(JSON.stringify({
+                                type: 'error',
+                                data: { message: '死亡玩家不能投注' }
+                            }));
+                            return;
+                        }
                     }
                     
                     const betAmount = parseInt(data.amount);

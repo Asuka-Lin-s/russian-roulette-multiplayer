@@ -448,6 +448,13 @@
         <!-- 游戏界面 -->
         <div class="game-screen" id="gameScreen">
             <div class="game-panel">
+                <!-- 房间信息 -->
+                <div style="text-align: center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <span style="color: #888;">房间号: </span>
+                    <span id="roomIdDisplay" style="font-size: 1.5rem; font-weight: bold; color: #4ecdc4; letter-spacing: 3px;">------</span>
+                    <button class="btn-small btn-primary" onclick="copyRoomId()" style="margin-left: 10px;">复制</button>
+                </div>
+                
                 <!-- 玩家区域 -->
                 <div class="players-area">
                     <div class="player-card" id="playerCard">
@@ -471,7 +478,7 @@
                 </div>
 
                 <!-- 投注区 -->
-                <div class="betting-area" id="bettingArea" style="display: none;">
+                <div class="betting-area" id="bettingArea">
                     <div class="betting-title">💎 点击按钮累加投注（底注1金币）</div>
                     <div class="bet-buttons">
                         <button class="bet-btn" onclick="placeBet(1)">1</button>
@@ -648,7 +655,23 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('gameScreen').style.display = 'block';
             document.getElementById('topBar').style.display = 'flex';
+            document.getElementById('roomIdDisplay').textContent = currentRoomId;
             updateTopBar();
+        }
+
+        function copyRoomId() {
+            navigator.clipboard.writeText(currentRoomId).then(() => {
+                alert('房间号已复制: ' + currentRoomId);
+            }).catch(() => {
+                // 降级方案
+                const input = document.createElement('input');
+                input.value = currentRoomId;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                alert('房间号已复制: ' + currentRoomId);
+            });
         }
 
         function updateTopBar() {
