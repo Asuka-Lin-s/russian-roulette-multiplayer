@@ -1027,10 +1027,19 @@
                     buttons.innerHTML = '<button class="btn" disabled>等待其他玩家...</button>';
                 }
             } else if (gameState.phase === 'ended') {
-                if (isHost) {
+                // 检查是否是赢家（上一局的存活者）
+                const winner = gameState.players.find(p => p.isAlive);
+                const isWinner = winner && winner.id === currentPlayerId;
+                
+                if (isWinner) {
+                    buttons.innerHTML = `
+                        <div style="margin-bottom: 10px; color: #ffd700;">🏆 你是赢家！请设置下一局子弹数量</div>
+                        <button class="btn btn-primary" onclick="nextGame()">开始下一局</button>
+                    `;
+                } else if (isHost) {
                     buttons.innerHTML = '<button class="btn btn-primary" onclick="resetGame()">再来一局</button>';
                 } else {
-                    buttons.innerHTML = '<button class="btn" disabled>游戏结束</button>';
+                    buttons.innerHTML = '<button class="btn" disabled>等待赢家开始下一局...</button>';
                 }
             }
         }
@@ -1049,6 +1058,10 @@
 
         function resetGame() {
             ws.send(JSON.stringify({ type: 'resetGame' }));
+        }
+
+        function nextGame() {
+            ws.send(JSON.stringify({ type: 'nextGame' }));
         }
 
         function sendChat() {
