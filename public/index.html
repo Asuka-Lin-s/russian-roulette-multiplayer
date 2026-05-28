@@ -453,6 +453,7 @@
                     <span style="color: #888;">房间号: </span>
                     <span id="roomIdDisplay" style="font-size: 1.5rem; font-weight: bold; color: #4ecdc4; letter-spacing: 3px;">------</span>
                     <button class="btn-small btn-primary" onclick="copyRoomId()" style="margin-left: 10px;">复制</button>
+                    <button class="btn-small" onclick="leaveRoom()" style="margin-left: 10px; background: #666;">退出房间</button>
                 </div>
                 
                 <!-- 玩家区域 -->
@@ -660,18 +661,58 @@
         }
 
         function copyRoomId() {
-            navigator.clipboard.writeText(currentRoomId).then(() => {
-                alert('房间号已复制: ' + currentRoomId);
-            }).catch(() => {
-                // 降级方案
-                const input = document.createElement('input');
-                input.value = currentRoomId;
-                document.body.appendChild(input);
-                input.select();
+            const roomId = document.getElementById('roomIdDisplay').textContent;
+            if (roomId === '------') {
+                alert('房间号未生成');
+                return;
+            }
+            
+            // 降级方案（更可靠）
+            const input = document.createElement('input');
+            input.value = roomId;
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.select();
+            input.setSelectionRange(0, 99999); // 移动端兼容
+            
+            try {
                 document.execCommand('copy');
-                document.body.removeChild(input);
-                alert('房间号已复制: ' + currentRoomId);
-            });
+                alert('房间号已复制: ' + roomId);
+            } catch (err) {
+                // 如果execCommand失败，尝试clipboard API
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(roomId).then(() => {
+                        alert('房间号已复制: ' + roomId);
+                    }).catch(() => {
+                        alert('复制失败，请手动复制: ' + roomId);
+                    });
+                } else {
+                    alert('复制失败，请手动复制: ' + roomId);
+                }
+            }
+            
+            document.body.removeChild(input);
+        }
+
+        function leaveRoom() {
+            if (confirm('确定要退出房间吗？')) {
+                if (ws) {
+                    ws.close();
+                }
+                // 重置状态
+                currentRoomId = null;
+                currentPlayerId = null;
+                isHost = false;
+                gameState = null;
+                currentBet = 0;
+                
+                // 显示登录界面
+                document.getElementById('gameScreen').style.display = 'none';
+                document.getElementById('topBar').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'block';
+                document.getElementById('roomIdDisplay').textContent = '------';
+            }
         }
 
         function updateTopBar() {
