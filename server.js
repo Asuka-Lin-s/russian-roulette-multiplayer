@@ -13,6 +13,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 游戏房间管理
 const rooms = new Map();
 
+// 玩家数据管理（内存存储，实际应用应该用数据库）
+const playerData = new Map();
+
+// 获取或创建玩家数据
+function getPlayerData(playerId) {
+    if (!playerData.has(playerId)) {
+        playerData.set(playerId, {
+            coins: 200,           // 初始金币
+            debt: 0,              // 借贷金额
+            lastWageTime: 0,      // 上次领工资时间
+            totalWinnings: 0,     // 总赢金
+            totalLosses: 0        // 总输金
+        });
+    }
+    return playerData.get(playerId);
+}
+
 // 生成房间ID
 function generateRoomId() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -26,17 +43,45 @@ function generatePlayerId() {
 // 创建新游戏状态
 function createGameState() {
     return {
-        phase: 'waiting', // waiting, ready, playing, ended
+        phase: 'waiting', // waiting, betting, ready, playing, ended
         players: [],
         chambers: [false, false, false, false, false, false],
-        bulletPositions: [], // 多子弹位置数组
-        bulletCount: 1, // 默认1发子弹
+        bulletPositions: [],
+        bulletCount: 1,
         currentChamber: 0,
         currentPlayerIndex: 0,
         rounds: 0,
         history: [],
-        message: '等待玩家加入...'
+        message: '等待玩家加入...',
+        pot: 0,               // 奖池
+        baseBet: 1,           // 底注
+        currentBet: 0         // 当前累加投注
     };
+}
+
+// 检查是否可以领工资（24小时冷却）
+function canClaimWage(lastWageTime) {
+    const now = Date.now();
+    const cooldown = 24 * 60 * 60 * 1000; // 24小时
+    return now - lastWageTime >= cooldown;
+}
+
+// 计算距离下次领工资还有多久
+function getWageCooldown(lastWageTime) {
+    const now = Date.now();
+    const cooldown = 24 * 60 * 60 * 1000;
+    const remaining = cooldown - (now - lastWageTime);
+    if (remaining <= 0) return 0;
+    
+    const hours = Math.floor(remaining / (60 * 60 * 1000));
+    const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+    const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+    return { hours, minutes, seconds };
+}
+
+// 格式化时间
+function formatTime(time) {
+    return `${time.hours.toString().padStart(2, '0')}:${time.minutes.toString().padStart(2, '0')}:${time.seconds.toString().padStart(2, '0')}`;
 }
 
 // 广播房间状态给所有玩家
@@ -46,18 +91,27 @@ function broadcastRoom(roomId) {
 
     const gameState = {
         phase: room.game.phase,
-        players: room.game.players.map(p => ({
-            id: p.id,
-            name: p.name,
-            isHost: p.isHost,
-            isAlive: p.isAlive,
-            isReady: p.isReady,
-            isCurrent: room.game.players[room.game.currentPlayerIndex]?.id === p.id
-        })),
+        players: room.game.players.map(p => {
+            const data = getPlayerData(p.id);
+            return {
+                id: p.id,
+                name: p.name,
+                isHost: p.isHost,
+                isAlive: p.isAlive,
+                isReady: p.isReady,
+                isCurrent: room.game.players[room.game.currentPlayerIndex]?.id === p.id,
+                coins: data.coins,
+                debt: data.debt,
+                currentBet: p.currentBet || 0
+            };
+        }),
         currentChamber: room.game.currentChamber,
         rounds: room.game.rounds,
         history: room.game.history,
-        message: room.game.message
+        message: room.game.message,
+        pot: room.game.pot,
+        baseBet: room.game.baseBet,
+        currentBet: room.game.currentBet
     };
 
     const message = JSON.stringify({
@@ -86,12 +140,13 @@ wss.on('connection', (ws) => {
 
             switch (data.type) {
                 case 'createRoom':
-                    // 创建房间
                     const roomId = generateRoomId();
                     const playerId = generatePlayerId();
                     
                     currentRoom = roomId;
                     currentPlayer = playerId;
+                    
+                    const playerData = getPlayerData(playerId);
                     
                     const newRoom = {
                         id: roomId,
@@ -102,8 +157,11 @@ wss.on('connection', (ws) => {
                             ws: ws,
                             isHost: true,
                             isAlive: true,
-                            isReady: false
-                        }]
+                            isReady: false,
+                            currentBet: 0
+                        }],
+                        lastWinnerId: null,
+                        lastWinnerName: null
                     };
                     
                     newRoom.game.players = newRoom.players;
@@ -111,7 +169,16 @@ wss.on('connection', (ws) => {
                     
                     ws.send(JSON.stringify({
                         type: 'roomCreated',
-                        data: { roomId, playerId }
+                        data: { 
+                            roomId, 
+                            playerId,
+                            playerData: {
+                                coins: playerData.coins,
+                                debt: playerData.debt,
+                                canClaimWage: canClaimWage(playerData.lastWageTime),
+                                wageCooldown: formatTime(getWageCooldown(playerData.lastWageTime))
+                            }
+                        }
                     }));
                     
                     broadcastRoom(roomId);
@@ -119,7 +186,6 @@ wss.on('connection', (ws) => {
                     break;
 
                 case 'joinRoom':
-                    // 加入房间
                     const joinRoomId = data.roomId?.toUpperCase();
                     const room = rooms.get(joinRoomId);
                     
@@ -131,7 +197,7 @@ wss.on('connection', (ws) => {
                         return;
                     }
                     
-                    if (room.game.phase !== 'waiting') {
+                    if (room.game.phase !== 'waiting' && room.game.phase !== 'betting') {
                         ws.send(JSON.stringify({
                             type: 'error',
                             data: { message: '游戏已开始，无法加入' }
@@ -151,13 +217,16 @@ wss.on('connection', (ws) => {
                     currentRoom = joinRoomId;
                     currentPlayer = joinPlayerId;
                     
+                    const joinPlayerData = getPlayerData(joinPlayerId);
+                    
                     const newPlayer = {
                         id: joinPlayerId,
                         name: data.playerName || `玩家${room.players.length + 1}`,
                         ws: ws,
                         isHost: false,
                         isAlive: true,
-                        isReady: false
+                        isReady: false,
+                        currentBet: 0
                     };
                     
                     room.players.push(newPlayer);
@@ -165,38 +234,168 @@ wss.on('connection', (ws) => {
                     
                     ws.send(JSON.stringify({
                         type: 'roomJoined',
-                        data: { roomId: joinRoomId, playerId: joinPlayerId }
+                        data: { 
+                            roomId: joinRoomId, 
+                            playerId: joinPlayerId,
+                            playerData: {
+                                coins: joinPlayerData.coins,
+                                debt: joinPlayerData.debt,
+                                canClaimWage: canClaimWage(joinPlayerData.lastWageTime),
+                                wageCooldown: formatTime(getWageCooldown(joinPlayerData.lastWageTime))
+                            }
+                        }
                     }));
                     
                     broadcastRoom(joinRoomId);
                     console.log(`玩家加入房间 ${joinRoomId}`);
                     break;
 
+                case 'placeBet':
+                    if (!currentRoom || !currentPlayer) return;
+                    const betRoom = rooms.get(currentRoom);
+                    if (!betRoom) return;
+                    
+                    if (betRoom.game.phase !== 'waiting' && betRoom.game.phase !== 'betting') {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '当前不能投注' }
+                        }));
+                        return;
+                    }
+                    
+                    const betAmount = parseInt(data.amount);
+                    if (![1, 5, 10, 20, 50, 100].includes(betAmount)) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '无效的投注金额' }
+                        }));
+                        return;
+                    }
+                    
+                    const betPlayerData = getPlayerData(currentPlayer);
+                    const totalBet = (betRoom.game.baseBet + betPlayerData.currentBet + betAmount);
+                    
+                    if (betPlayerData.coins < totalBet) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '金币不足' }
+                        }));
+                        return;
+                    }
+                    
+                    // 累加投注
+                    const player = betRoom.players.find(p => p.id === currentPlayer);
+                    if (player) {
+                        player.currentBet = (player.currentBet || 0) + betAmount;
+                        betRoom.game.currentBet += betAmount;
+                        betRoom.game.pot += betAmount;
+                    }
+                    
+                    betRoom.game.phase = 'betting';
+                    betRoom.game.message = `投注中... 当前奖池: ${betRoom.game.pot}金币`;
+                    
+                    ws.send(JSON.stringify({
+                        type: 'betPlaced',
+                        data: { amount: betAmount, totalBet: player.currentBet }
+                    }));
+                    
+                    broadcastRoom(currentRoom);
+                    console.log(`玩家 ${currentPlayer} 投注 ${betAmount}`);
+                    break;
+
                 case 'ready':
-                    // 玩家准备
                     if (!currentRoom || !currentPlayer) return;
                     const readyRoom = rooms.get(currentRoom);
                     if (!readyRoom) return;
                     
                     const readyPlayer = readyRoom.players.find(p => p.id === currentPlayer);
-                    if (readyPlayer) {
-                        readyPlayer.isReady = true;
+                    if (!readyPlayer) return;
+                    
+                    // 扣除底注和投注
+                    const readyPlayerData = getPlayerData(currentPlayer);
+                    const totalDeduction = readyRoom.game.baseBet + (readyPlayer.currentBet || 0);
+                    
+                    if (readyPlayerData.coins < totalDeduction) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '金币不足，无法准备' }
+                        }));
+                        return;
+                    }
+                    
+                    readyPlayerData.coins -= totalDeduction;
+                    readyRoom.game.pot += readyRoom.game.baseBet;
+                    
+                    readyPlayer.isReady = true;
+                    
+                    const allReady = readyRoom.players.every(p => p.isReady);
+                    if (allReady && readyRoom.players.length >= 2) {
+                        readyRoom.game.phase = 'ready';
+                        readyRoom.game.message = `所有玩家已准备，奖池: ${readyRoom.game.pot}金币，等待房主开始`;
+                    } else {
+                        readyRoom.game.message = `等待其他玩家准备... (${readyRoom.players.filter(p => p.isReady).length}/${readyRoom.players.length})`;
+                    }
+                    
+                    broadcastRoom(currentRoom);
+                    break;
+
+                case 'claimWage':
+                    if (!currentPlayer) return;
+                    const wagePlayerData = getPlayerData(currentPlayer);
+                    
+                    if (canClaimWage(wagePlayerData.lastWageTime)) {
+                        wagePlayerData.coins += 200;
+                        wagePlayerData.lastWageTime = Date.now();
                         
-                        // 检查是否所有玩家都准备了
-                        const allReady = readyRoom.players.every(p => p.isReady);
-                        if (allReady && readyRoom.players.length >= 2) {
-                            readyRoom.game.phase = 'ready';
-                            readyRoom.game.message = '所有玩家已准备，等待房主设置子弹数量并开始游戏';
-                        } else {
-                            readyRoom.game.message = `等待其他玩家准备... (${readyRoom.players.filter(p => p.isReady).length}/${readyRoom.players.length})`;
+                        ws.send(JSON.stringify({
+                            type: 'wageClaimed',
+                            data: { 
+                                coins: wagePlayerData.coins,
+                                message: '领取工资成功！获得200金币'
+                            }
+                        }));
+                        
+                        if (currentRoom) {
+                            broadcastRoom(currentRoom);
                         }
-                        
+                    } else {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '工资冷却中，24小时后可再次领取' }
+                        }));
+                    }
+                    break;
+
+                case 'takeLoan':
+                    if (!currentPlayer) return;
+                    const loanPlayerData = getPlayerData(currentPlayer);
+                    
+                    if (loanPlayerData.debt + 900 > 10000) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '借贷金额将超过上限10000' }
+                        }));
+                        return;
+                    }
+                    
+                    loanPlayerData.coins += 900;
+                    loanPlayerData.debt += 900;
+                    
+                    ws.send(JSON.stringify({
+                            type: 'loanTaken',
+                            data: {
+                                coins: loanPlayerData.coins,
+                                debt: loanPlayerData.debt,
+                                message: '借贷成功！获得900金币，需还1300'
+                            }
+                        }));
+                    
+                    if (currentRoom) {
                         broadcastRoom(currentRoom);
                     }
                     break;
 
                 case 'setBulletCount':
-                    // 设置子弹数量（只有房主可以）
                     if (!currentRoom || !currentPlayer) return;
                     const bulletRoom = rooms.get(currentRoom);
                     if (!bulletRoom) return;
@@ -222,7 +421,7 @@ wss.on('connection', (ws) => {
                     }
                     
                     bulletRoom.game.bulletCount = count;
-                    bulletRoom.game.message = `房主设置了 ${count} 发子弹，点击开始游戏`;
+                    bulletRoom.game.message = `房主设置了 ${count} 发子弹，奖池: ${bulletRoom.game.pot}金币`;
                     
                     ws.send(JSON.stringify({
                         type: 'bulletCountSet',
@@ -230,11 +429,9 @@ wss.on('connection', (ws) => {
                     }));
                     
                     broadcastRoom(currentRoom);
-                    console.log(`房间 ${currentRoom} 设置了 ${count} 发子弹`);
                     break;
 
                 case 'startGame':
-                    // 开始游戏（只有房主可以）
                     if (!currentRoom || !currentPlayer) return;
                     const startRoom = rooms.get(currentRoom);
                     if (!startRoom) return;
@@ -255,15 +452,12 @@ wss.on('connection', (ws) => {
                     startRoom.game.chambers = [false, false, false, false, false, false];
                     startRoom.game.bulletPositions = [];
                     
-                    // 根据设置的子弹数量填充弹仓
                     const bulletCount = startRoom.game.bulletCount || 1;
                     const positions = [0, 1, 2, 3, 4, 5];
-                    // 随机打乱位置
                     for (let i = positions.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [positions[i], positions[j]] = [positions[j], positions[i]];
                     }
-                    // 填充子弹
                     for (let i = 0; i < bulletCount; i++) {
                         startRoom.game.chambers[positions[i]] = true;
                         startRoom.game.bulletPositions.push(positions[i]);
@@ -276,14 +470,13 @@ wss.on('connection', (ws) => {
                     
                     const firstPlayer = startRoom.game.players[startRoom.game.currentPlayerIndex];
                     const actualBulletCount = startRoom.game.bulletPositions.length;
-                    startRoom.game.message = `游戏开始！${actualBulletCount}发子弹已装填，${firstPlayer.name} 先开枪`;
+                    startRoom.game.message = `游戏开始！${actualBulletCount}发子弹，奖池${startRoom.game.pot}金币，${firstPlayer.name} 先开枪`;
                     
                     broadcastRoom(currentRoom);
-                    console.log(`房间 ${currentRoom} 游戏开始，${actualBulletCount}发子弹`);
+                    console.log(`房间 ${currentRoom} 游戏开始`);
                     break;
 
                 case 'fire':
-                    // 扣动扳机
                     if (!currentRoom || !currentPlayer) return;
                     const fireRoom = rooms.get(currentRoom);
                     if (!fireRoom || fireRoom.game.phase !== 'playing') return;
@@ -301,7 +494,6 @@ wss.on('connection', (ws) => {
                     const hasBullet = fireRoom.game.chambers[fireRoom.game.currentChamber];
                     
                     if (hasBullet) {
-                        // 中弹死亡
                         currentGamePlayer.isAlive = false;
                         
                         fireRoom.game.history.push({
@@ -311,26 +503,39 @@ wss.on('connection', (ws) => {
                             chamber: fireRoom.game.currentChamber + 1
                         });
                         
-                        // 检查是否只剩一个存活玩家
                         const alivePlayers = fireRoom.players.filter(p => p.isAlive);
                         
                         if (alivePlayers.length <= 1) {
-                            // 游戏结束
                             fireRoom.game.phase = 'ended';
                             const winner = alivePlayers[0];
-                            // 记录赢家ID和名字
+                            
                             if (winner) {
                                 fireRoom.lastWinnerId = winner.id;
                                 fireRoom.lastWinnerName = winner.name;
+                                
+                                // 赢家获得奖池
+                                const winnerData = getPlayerData(winner.id);
+                                const pot = fireRoom.game.pot;
+                                
+                                // 计算还款（如果有债务）
+                                let repayment = 0;
+                                if (winnerData.debt > 0) {
+                                    repayment = Math.floor(pot * 0.35);
+                                    const actualRepayment = Math.min(repayment, Math.floor(winnerData.debt * (13/9)));
+                                    winnerData.debt = Math.max(0, winnerData.debt - Math.floor(actualRepayment * (9/13)));
+                                }
+                                
+                                const netWinnings = pot - repayment;
+                                winnerData.coins += netWinnings;
+                                winnerData.totalWinnings += netWinnings;
+                                
+                                fireRoom.game.message = `💥 ${currentGamePlayer.name} 死了！${winner.name} 获胜！赢得${netWinnings}金币${repayment > 0 ? '（还款' + repayment + '）' : ''}`;
+                            } else {
+                                fireRoom.game.message = `💥 ${currentGamePlayer.name} 死了！同归于尽！`;
                             }
-                            fireRoom.game.message = winner 
-                                ? `💥 ${currentGamePlayer.name} 死了！${winner.name} 获胜！点击"下一局"开始新游戏` 
-                                : `💥 ${currentGamePlayer.name} 死了！同归于尽！`;
                         } else {
-                            // 继续游戏，跳过死亡玩家
                             fireRoom.game.message = `💥 ${currentGamePlayer.name} 中弹身亡！`;
                             
-                            // 找到下一个存活的玩家
                             do {
                                 fireRoom.game.currentPlayerIndex = (fireRoom.game.currentPlayerIndex + 1) % fireRoom.players.length;
                             } while (!fireRoom.game.players[fireRoom.game.currentPlayerIndex].isAlive);
@@ -338,12 +543,10 @@ wss.on('connection', (ws) => {
                             const nextPlayer = fireRoom.game.players[fireRoom.game.currentPlayerIndex];
                             fireRoom.game.message += ` 轮到 ${nextPlayer.name}`;
                             
-                            // 重新装弹旋转
                             fireRoom.game.currentChamber = 0;
                             fireRoom.game.chambers = [false, false, false, false, false, false];
                             fireRoom.game.bulletPositions = [];
                             
-                            // 重新随机填充子弹
                             const newPositions = [0, 1, 2, 3, 4, 5];
                             for (let i = newPositions.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
@@ -356,7 +559,6 @@ wss.on('connection', (ws) => {
                             }
                         }
                     } else {
-                        // 存活
                         fireRoom.game.history.push({
                             round: fireRoom.game.rounds,
                             player: currentGamePlayer.name,
@@ -367,13 +569,11 @@ wss.on('connection', (ws) => {
                         fireRoom.game.currentChamber++;
                         
                         if (fireRoom.game.currentChamber >= 6) {
-                            // 所有弹仓都是空的，奇迹生还
                             fireRoom.game.message = `🔘 ${currentGamePlayer.name} 奇迹般生还！重新装弹...`;
                             fireRoom.game.currentChamber = 0;
                             fireRoom.game.chambers = [false, false, false, false, false, false];
                             fireRoom.game.bulletPositions = [];
                             
-                            // 重新随机填充子弹
                             const newPositions2 = [0, 1, 2, 3, 4, 5];
                             for (let i = newPositions2.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
@@ -388,7 +588,6 @@ wss.on('connection', (ws) => {
                             fireRoom.game.message = `🔘 ${currentGamePlayer.name} 存活！`;
                         }
                         
-                        // 轮到下一个存活的玩家
                         do {
                             fireRoom.game.currentPlayerIndex = (fireRoom.game.currentPlayerIndex + 1) % fireRoom.players.length;
                         } while (!fireRoom.game.players[fireRoom.game.currentPlayerIndex].isAlive);
@@ -400,35 +599,11 @@ wss.on('connection', (ws) => {
                     broadcastRoom(currentRoom);
                     break;
 
-                case 'resetGame':
-                    // 重置游戏（只有房主可以）
-                    if (!currentRoom || !currentPlayer) return;
-                    const resetRoom = rooms.get(currentRoom);
-                    if (!resetRoom) return;
-                    
-                    const resetPlayer = resetRoom.players.find(p => p.id === currentPlayer);
-                    if (!resetPlayer?.isHost) return;
-                    
-                    // 重置所有玩家状态
-                    resetRoom.players.forEach(p => {
-                        p.isAlive = true;
-                        p.isReady = false;
-                    });
-                    
-                    resetRoom.game = createGameState();
-                    resetRoom.game.players = resetRoom.players;
-                    
-                    broadcastRoom(currentRoom);
-                    console.log(`房间 ${currentRoom} 游戏重置`);
-                    break;
-
                 case 'nextGame':
-                    // 开始下一局（赢家成为新房主并设置子弹）
                     if (!currentRoom || !currentPlayer) return;
                     const nextRoom = rooms.get(currentRoom);
                     if (!nextRoom) return;
                     
-                    // 检查是否是上一局的赢家
                     if (nextRoom.lastWinnerId && nextRoom.lastWinnerId !== currentPlayer) {
                         ws.send(JSON.stringify({
                             type: 'error',
@@ -437,24 +612,24 @@ wss.on('connection', (ws) => {
                         return;
                     }
                     
-                    // 赢家成为房主
+                    // 重置玩家投注
                     nextRoom.players.forEach(p => {
                         p.isHost = (p.id === currentPlayer);
                         p.isAlive = true;
                         p.isReady = false;
+                        p.currentBet = 0;
                     });
                     
                     nextRoom.game = createGameState();
                     nextRoom.game.players = nextRoom.players;
-                    nextRoom.game.phase = 'ready'; // 直接进入准备阶段，让赢家设置子弹
-                    nextRoom.game.message = `${nextRoom.lastWinnerName || '赢家'}请设置子弹数量`;
+                    nextRoom.game.phase = 'betting';
+                    nextRoom.game.message = `${nextRoom.lastWinnerName || '赢家'}请投注，底注1金币`;
                     
                     broadcastRoom(currentRoom);
-                    console.log(`房间 ${currentRoom} 开始下一局，赢家 ${nextRoom.lastWinnerName} 设置子弹`);
+                    console.log(`房间 ${currentRoom} 开始下一局`);
                     break;
 
                 case 'chat':
-                    // 聊天消息
                     if (!currentRoom || !currentPlayer) return;
                     const chatRoom = rooms.get(currentRoom);
                     if (!chatRoom) return;
@@ -489,24 +664,20 @@ wss.on('connection', (ws) => {
         if (currentRoom && currentPlayer) {
             const room = rooms.get(currentRoom);
             if (room) {
-                // 移除玩家
                 const playerIndex = room.players.findIndex(p => p.id === currentPlayer);
                 if (playerIndex > -1) {
                     const player = room.players[playerIndex];
                     room.players.splice(playerIndex, 1);
                     room.game.players = room.players;
                     
-                    // 如果房间空了，删除房间
                     if (room.players.length === 0) {
                         rooms.delete(currentRoom);
                         console.log(`房间 ${currentRoom} 已删除`);
                     } else {
-                        // 如果房主离开，转让房主
                         if (player.isHost && room.players.length > 0) {
                             room.players[0].isHost = true;
                         }
                         
-                        // 如果游戏进行中，检查是否结束
                         if (room.game.phase === 'playing') {
                             const alivePlayers = room.players.filter(p => p.isAlive);
                             if (alivePlayers.length <= 1) {
