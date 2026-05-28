@@ -15,9 +15,23 @@ const rooms = new Map();
 
 // 玩家数据管理（内存存储，实际应用应该用数据库）
 const playerData = new Map();
+const playerIdMap = new Map(); // 昵称到玩家ID的映射
 
 // 获取或创建玩家数据
-function getPlayerData(playerId) {
+function getPlayerData(playerId, playerName) {
+    // 如果提供了昵称，尝试用昵称查找已有数据
+    if (playerName && playerIdMap.has(playerName)) {
+        const existingId = playerIdMap.get(playerName);
+        if (playerData.has(existingId)) {
+            // 更新ID映射（玩家可能重新连接）
+            playerIdMap.set(playerName, playerId);
+            const data = playerData.get(existingId);
+            playerData.set(playerId, data);
+            playerData.delete(existingId);
+            return data;
+        }
+    }
+    
     if (!playerData.has(playerId)) {
         playerData.set(playerId, {
             coins: 200,           // 初始金币
@@ -26,6 +40,10 @@ function getPlayerData(playerId) {
             totalWinnings: 0,     // 总赢金
             totalLosses: 0        // 总输金
         });
+        // 记录昵称到ID的映射
+        if (playerName) {
+            playerIdMap.set(playerName, playerId);
+        }
     }
     return playerData.get(playerId);
 }
@@ -147,7 +165,7 @@ wss.on('connection', (ws) => {
                     currentRoom = roomId;
                     currentPlayer = playerId;
                     
-                    const playerData = getPlayerData(playerId);
+                    const playerData = getPlayerData(playerId, data.playerName);
                     
                     const newRoom = {
                         id: roomId,
@@ -218,7 +236,7 @@ wss.on('connection', (ws) => {
                     currentRoom = joinRoomId;
                     currentPlayer = joinPlayerId;
                     
-                    const joinPlayerData = getPlayerData(joinPlayerId);
+                    const joinPlayerData = getPlayerData(joinPlayerId, data.playerName);
                     
                     const newPlayer = {
                         id: joinPlayerId,
