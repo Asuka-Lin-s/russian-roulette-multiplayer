@@ -702,13 +702,25 @@ wss.on('connection', (ws) => {
                             room.players[0].isHost = true;
                         }
                         
-                        if (room.game.phase === 'playing') {
+                        // 如果有玩家离开，重置游戏状态为等待
+                        if (room.game.phase === 'playing' || room.game.phase === 'ended' || room.game.phase === 'ready') {
                             const alivePlayers = room.players.filter(p => p.isAlive);
                             if (alivePlayers.length <= 1) {
-                                room.game.phase = 'ended';
-                                room.game.message = alivePlayers.length === 1 
-                                    ? `${alivePlayers[0].name} 获胜！` 
-                                    : '所有玩家都已离开';
+                                // 游戏结束，重置为等待状态，允许新玩家加入
+                                room.game.phase = 'waiting';
+                                room.game = createGameState();
+                                room.game.players = room.players;
+                                room.lastWinnerId = null;
+                                room.lastWinnerName = null;
+                                
+                                // 重置所有玩家的准备状态
+                                room.players.forEach(p => {
+                                    p.isReady = false;
+                                    p.isAlive = true;
+                                    p.currentBet = 0;
+                                });
+                                
+                                room.game.message = `${player.name} 离开了房间，游戏重置，等待新玩家加入`;
                             }
                         }
                         
