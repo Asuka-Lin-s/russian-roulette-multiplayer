@@ -476,7 +476,8 @@ wss.on('connection', (ws) => {
                     startRoom.game.chambers = [false, false, false, false, false, false];
                     startRoom.game.bulletPositions = [];
                     
-                    const bulletCount = startRoom.game.bulletCount || 1;
+                    // 使用前端传来的子弹数量，如果没有则使用之前设置的
+                    const bulletCount = data.bulletCount || startRoom.game.bulletCount || 1;
                     const positions = [0, 1, 2, 3, 4, 5];
                     for (let i = positions.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));

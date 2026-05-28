@@ -855,7 +855,7 @@
 
         function startGame() {
             if (!ws) return;
-            ws.send(JSON.stringify({ type: 'startGame' }));
+            ws.send(JSON.stringify({ type: 'startGame', bulletCount: selectedBulletCount }));
         }
 
         function fire() {
