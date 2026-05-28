@@ -81,6 +81,7 @@ function getWageCooldown(lastWageTime) {
 
 // 格式化时间
 function formatTime(time) {
+    if (!time || time === 0) return '00:00:00';
     return `${time.hours.toString().padStart(2, '0')}:${time.minutes.toString().padStart(2, '0')}:${time.seconds.toString().padStart(2, '0')}`;
 }
 
