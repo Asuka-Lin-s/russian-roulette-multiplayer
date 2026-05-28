@@ -564,17 +564,30 @@
         function connectWebSocket(onOpen) {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}`;
+            console.log('Connecting to:', wsUrl);
+            
             ws = new WebSocket(wsUrl);
             
-            ws.onopen = onOpen;
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                onOpen();
+            };
             
             ws.onmessage = (event) => {
+                console.log('Received:', event.data);
                 const data = JSON.parse(event.data);
                 handleMessage(data);
             };
             
-            ws.onerror = () => showError('连接失败');
-            ws.onclose = () => showError('连接已断开');
+            ws.onerror = (err) => {
+                console.error('WebSocket error:', err);
+                showError('连接失败，请检查服务器是否运行');
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket closed');
+                showError('连接已断开');
+            };
         }
 
         function handleMessage(data) {
