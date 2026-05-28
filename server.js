@@ -318,7 +318,11 @@ wss.on('connection', (ws) => {
                             // 游戏结束
                             fireRoom.game.phase = 'ended';
                             const winner = alivePlayers[0];
-                            fireRoom.lastWinner = winner; // 记录赢家
+                            // 记录赢家ID和名字
+                            if (winner) {
+                                fireRoom.lastWinnerId = winner.id;
+                                fireRoom.lastWinnerName = winner.name;
+                            }
                             fireRoom.game.message = winner 
                                 ? `💥 ${currentGamePlayer.name} 死了！${winner.name} 获胜！点击"下一局"开始新游戏` 
                                 : `💥 ${currentGamePlayer.name} 死了！同归于尽！`;
@@ -425,8 +429,7 @@ wss.on('connection', (ws) => {
                     if (!nextRoom) return;
                     
                     // 检查是否是上一局的赢家
-                    const lastWinner = nextRoom.lastWinner;
-                    if (lastWinner && lastWinner.id !== currentPlayer) {
+                    if (nextRoom.lastWinnerId && nextRoom.lastWinnerId !== currentPlayer) {
                         ws.send(JSON.stringify({
                             type: 'error',
                             data: { message: '只有赢家可以开始下一局' }
@@ -444,10 +447,10 @@ wss.on('connection', (ws) => {
                     nextRoom.game = createGameState();
                     nextRoom.game.players = nextRoom.players;
                     nextRoom.game.phase = 'ready'; // 直接进入准备阶段，让赢家设置子弹
-                    nextRoom.game.message = `${lastWinner?.name || '赢家'}请设置子弹数量`;
+                    nextRoom.game.message = `${nextRoom.lastWinnerName || '赢家'}请设置子弹数量`;
                     
                     broadcastRoom(currentRoom);
-                    console.log(`房间 ${currentRoom} 开始下一局，赢家 ${lastWinner?.name} 设置子弹`);
+                    console.log(`房间 ${currentRoom} 开始下一局，赢家 ${nextRoom.lastWinnerName} 设置子弹`);
                     break;
 
                 case 'chat':

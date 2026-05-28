@@ -844,6 +844,11 @@
                     break;
                 case 'gameState':
                     gameState = data.data;
+                    // 根据游戏状态更新 isHost
+                    const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
+                    if (currentPlayer) {
+                        isHost = currentPlayer.isHost;
+                    }
                     updateGameUI();
                     break;
                 case 'bulletCountSet':
