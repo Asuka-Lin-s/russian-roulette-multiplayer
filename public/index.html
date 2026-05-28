@@ -217,6 +217,16 @@
                     </div>
                 </div>
                 <div class="message-area" id="messageArea">等待玩家加入...</div>
+                
+                <!-- 聊天区域 -->
+                <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <div style="height: 100px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; margin-bottom: 10px;" id="chatMessages"></div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chatInput" placeholder="输入消息..." maxlength="50" style="flex: 1; padding: 8px; border: 1px solid #444; border-radius: 5px; background: rgba(0,0,0,0.3); color: #fff;" onkeypress="if(event.key==='Enter')sendChat()">
+                        <button class="btn-small btn-primary" onclick="sendChat()" style="width: auto; margin: 0;">发送</button>
+                    </div>
+                </div>
+                
                 <div class="action-area" id="actionArea">
                     <div class="action-title" id="actionTitle">选择你的行动</div>
                     <div class="bullet-options" id="bulletOptions" style="display: none;">
@@ -313,6 +323,9 @@
                 case 'betPlaced':
                     currentBet = data.data.totalBet;
                     document.getElementById('betInfo').textContent = `当前投注: ${currentBet} | 总计: ${1 + currentBet}（含底注）`;
+                    break;
+                case 'chat':
+                    addChatMessage(data.data.player, data.data.message, data.data.time);
                     break;
             }
         }
@@ -492,6 +505,24 @@
                 document.getElementById('lobbyScreen').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'block';
             }
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            if (ws) ws.send(JSON.stringify({ type: 'chat', message: message }));
+            input.value = '';
+        }
+
+        function addChatMessage(player, message, time) {
+            const chatDiv = document.getElementById('chatMessages');
+            const msgEl = document.createElement('div');
+            msgEl.style.marginBottom = '5px';
+            msgEl.style.fontSize = '0.85rem';
+            msgEl.innerHTML = `<span style="color: #4ecdc4;">${player}</span>: ${message}`;
+            chatDiv.appendChild(msgEl);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
         }
 
         selectBullet(1);

@@ -117,9 +117,9 @@
             </div>
             <div class="input-group">
                 <label>密码</label>
-                <input type="password" id="loginPassword" placeholder="输入密码" maxlength="20">
+                <input type="password" id="loginPassword" placeholder="输入密码" maxlength="20" onkeypress="if(event.key==='Enter')login()">
             </div>
-            <button class="btn btn-primary" onclick="login()">登录 / 注册</button>
+            <button class="btn btn-primary" onclick="login()" id="loginBtn">登录 / 注册</button>
         </div>
         
         <!-- 大厅界面 -->
@@ -217,6 +217,16 @@
                     </div>
                 </div>
                 <div class="message-area" id="messageArea">等待玩家加入...</div>
+                
+                <!-- 聊天区域 -->
+                <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <div style="height: 100px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; margin-bottom: 10px;" id="chatMessages"></div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chatInput" placeholder="输入消息..." maxlength="50" style="flex: 1; padding: 8px; border: 1px solid #444; border-radius: 5px; background: rgba(0,0,0,0.3); color: #fff;" onkeypress="if(event.key==='Enter')sendChat()">
+                        <button class="btn-small btn-primary" onclick="sendChat()" style="width: auto; margin: 0;">发送</button>
+                    </div>
+                </div>
+                
                 <div class="action-area" id="actionArea">
                     <div class="action-title" id="actionTitle">选择你的行动</div>
                     <div class="bullet-options" id="bulletOptions" style="display: none;">
@@ -314,14 +324,37 @@
                     currentBet = data.data.totalBet;
                     document.getElementById('betInfo').textContent = `当前投注: ${currentBet} | 总计: ${1 + currentBet}（含底注）`;
                     break;
+                case 'chat':
+                    addChatMessage(data.data.player, data.data.message, data.data.time);
+                    break;
             }
         }
 
         function login() {
             const name = document.getElementById('loginName').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
+            const btn = document.getElementById('loginBtn');
+            
             if (!name || !password) { showError('请输入昵称和密码'); return; }
-            connectWebSocket(() => ws.send(JSON.stringify({ type: 'login', playerName: name, password: password })));
+            
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+            
+            // 如果已有连接，先关闭
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            connectWebSocket(() => {
+                ws.send(JSON.stringify({ type: 'login', playerName: name, password: password }));
+            });
+            
+            // 3秒后恢复按钮（防止卡住）
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = '登录 / 注册';
+            }, 3000);
         }
 
         function showLobby() {
@@ -449,7 +482,10 @@
         }
         function leaveRoom() {
             if (confirm('确定要退出房间吗？')) {
-                if (ws) ws.close();
+                if (ws) {
+                    ws.close();
+                    ws = null;
+                }
                 currentRoomId = null;
                 currentPlayerId = null;
                 isHost = false;
@@ -458,6 +494,8 @@
                 document.getElementById('gameScreen').style.display = 'none';
                 document.getElementById('lobbyScreen').style.display = 'block';
                 document.getElementById('roomIdDisplay').textContent = '------';
+                // 重新连接WebSocket以便后续操作
+                setTimeout(() => connectWebSocket(() => {}), 100);
             }
         }
         function logout() {
@@ -467,6 +505,24 @@
                 document.getElementById('lobbyScreen').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'block';
             }
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            if (ws) ws.send(JSON.stringify({ type: 'chat', message: message }));
+            input.value = '';
+        }
+
+        function addChatMessage(player, message, time) {
+            const chatDiv = document.getElementById('chatMessages');
+            const msgEl = document.createElement('div');
+            msgEl.style.marginBottom = '5px';
+            msgEl.style.fontSize = '0.85rem';
+            msgEl.innerHTML = `<span style="color: #4ecdc4;">${player}</span>: ${message}`;
+            chatDiv.appendChild(msgEl);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
         }
 
         selectBullet(1);
