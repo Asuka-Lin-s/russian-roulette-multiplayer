@@ -846,6 +846,8 @@
             document.querySelectorAll('.bullet-option').forEach((btn, idx) => {
                 btn.classList.toggle('selected', idx + 1 === count);
             });
+            // 更新按钮显示
+            updateActionButtons();
         }
 
         function setReady() {
