@@ -286,10 +286,23 @@ wss.on('connection', (ws) => {
                         return;
                     }
                     
+                    // 获取玩家对象和玩家数据
+                    const player = betRoom.players.find(p => p.id === currentPlayer);
                     const betPlayerData = getPlayerData(currentPlayer);
-                    const totalBet = (betRoom.game.baseBet + betPlayerData.currentBet + betAmount);
                     
-                    if (betPlayerData.coins < totalBet) {
+                    if (!player) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            data: { message: '玩家不存在' }
+                        }));
+                        return;
+                    }
+                    
+                    // 计算总投注（底注 + 已投注 + 新投注）
+                    const playerCurrentBet = player.currentBet || 0;
+                    const totalRequired = betRoom.game.baseBet + playerCurrentBet + betAmount;
+                    
+                    if (betPlayerData.coins < totalRequired) {
                         ws.send(JSON.stringify({
                             type: 'error',
                             data: { message: '金币不足' }
@@ -298,10 +311,8 @@ wss.on('connection', (ws) => {
                     }
                     
                     // 累加投注
-                    const player = betRoom.players.find(p => p.id === currentPlayer);
-                    if (player) {
-                        player.currentBet = (player.currentBet || 0) + betAmount;
-                        betRoom.game.currentBet += betAmount;
+                    player.currentBet = playerCurrentBet + betAmount;
+                    betRoom.game.currentBet += betAmount;
                         betRoom.game.pot += betAmount;
                     }
                     
